@@ -13,59 +13,49 @@
  *
  */
 
-/*
-    This is the CSS stylesheet of your game User Interface.
-    
-    Styles defined on this file will be applied to the HTML elements you define in your
-    HTML template (martiandicekw_martiandicekw.tpl), and to HTML elements you create dynamically
-    (in martiandicekw.js).
-    
-    Usually, you are using CSS to:
-    
-    1°) define the overall layout of your game
-        (ex: place the board on the top left, place player's hand beside, place the deck on the right, ...).
-
-    2°) create your CSS-sprites:
-        All images of your games should be gathered into a small number of image files. Then, using
-        background-image and background-position CSS properties, you create HTML blocks that can 
-        display these images correctly (see example below).
-    
-    3°) ... anything else:
-        It is really easy to add and remove CSS classes dynamically from your Javascript with
-        dojo.addClass and dojo.removeClass. It is also easy to check if an element has a class
-        (dojo.hasClass) or to get all elements with a specific class (dojo.query). This is why,
-        very often, using CSS classes for the logic of your user interface allow you to do complex
-        thing easily.
-        
-        
-     Note: on the production platform, this file will be compressed and comments will be removed.
-           Consequently, don't hesitate to put as many comments as necessary.
-*/
-
-
-/* Note: you must not use any @import directive */
-
-
-/********* You can start writing your CSS below this line: **********/
-
-
 #board {
-     width: 740px;
-     height: 112px;
- }
+    width: 780px;
+    height: 900px;
+    display: grid;
+    grid-auto-rows: 56px;
+    align-self: center;
+}
 
- .pa_square, .aside_square {
-     width: 55px;
-     height: 55px;
-     position: absolute;
- }
+#play_area, #military_area {
+    width: 780px;
+    display: flex;
+    justify-content: center;
+    position: relative;
+}
 
- .die {
-     width: 55px;
-     height: 55px;
-     position: absolute;
-     background-image: url('img/martdice55.jpg');
-     cursor: pointer;
+#tank_area, #deathray_area {
+    height: fit-content;
+}
+
+#earthlings {
+    position: absolute;
+    margin-left: 10px;
+}
+
+#e1_area, #e2_area, #e3_area {
+    display: flex;
+    max-width: 240px;
+    flex-wrap: wrap;
+    margin-top: 22px;
+}
+
+.pa_square, .aside_square, .tank_square, .deathray_square, .e1_square, .e2_square, .e3_square {
+    width: 55px;
+    height: 55px;
+    margin: 0 5px 5px 0;
+}
+
+.die {
+    width: 55px;
+    height: 55px;
+    position: absolute;
+    background-image: url('img/martdice55.jpg');
+    cursor: pointer;
 }
 
 .dietype_ufo { background-position: 0 0; }
@@ -76,7 +66,7 @@
 
 .impossibleMove {
     background-color: white;
-    opacity: 0.2;
-    filter:alpha(opacity=20); /* For IE8 and earlier */   
+    opacity: 0.3;
+    filter:alpha(opacity=30); /* For IE8 and earlier */
     cursor: default;
 }

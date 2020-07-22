@@ -24,8 +24,17 @@ define([
         return declare("bgagame.martiandicekw", ebg.core.gamegui, {
             constructor: function () {
                 console.log('martiandicekw constructor');
-                this.nextDie = 1;
-                this.nextDieSetAside = 1;
+                this.maxDiceInAnyArea = 13;
+                this.playAreaDiceCounter = 1;
+                this.setAsideDiceCountersNew = {
+                    deathray: 1,
+                    cow: 1,
+                    tank: 1,
+                    chicken: 1,
+                    human: 1,
+                };
+                this.setAsideDiceCounters = {};
+                this.mapping = {};
             },
 
             /*
@@ -44,6 +53,7 @@ define([
             setup: function (gamedatas) {
                 console.log("Starting game setup");
 
+                this.setAsideDiceCounters = { ...this.setAsideDiceCountersNew };
                 const allDice = gamedatas.current_round_dice.map((e) => {
                     const setAsideAmount = gamedatas.set_aside_dice.find((die) => die.type === e.type).amount
                     return {
@@ -53,6 +63,7 @@ define([
                 });
 
                 this.placeNewDice(allDice);
+
                 this.doSetAsideAnimations(gamedatas.set_aside_dice);
                 this.updatePossibleMoves(gamedatas.current_round_dice);
 
@@ -63,6 +74,7 @@ define([
 
                 console.log("Ending game setup");
             },
+
 
 
             ///////////////////////////////////////////////////
@@ -133,13 +145,6 @@ define([
             ///////////////////////////////////////////////////
             //// Utility methods
 
-            /*
-
-                Here, you can defines some utility methods that you can use everywhere in your javascript
-                script.
-
-            */
-
             placeNewDice: function(dice) {
                 dice.forEach(die => {
                     this.addDieToPlayArea(die.jsclass, die.amount);
@@ -150,30 +155,14 @@ define([
             addDieToPlayArea: function (type, count) {
                 for (i = 0; i < count; i++) {
                     dojo.place(this.format_block('jstpl_die', {
-                        n: this.nextDie,
+                        n: this.playAreaDiceCounter,
                         type: type
                     }), 'dice');
 
-                    this.placeOnObject('die_' + this.nextDie, dojo.query('#player_boards .player-board')[0]);
-                    this.slideToObject('die_' + this.nextDie, 'pa_square_' + this.nextDie).play();
-                    dojo.addClass('die_' + this.nextDie, 'play_area');
-                    this.nextDie += 1;
-                }
-            },
-
-            addDieToAsideArea: function(type, count) {
-                for (i = 0; i < count; i++) {
-                    dojo.place(this.format_block('jstpl_die', {
-                        n: this.nextDie,
-                        type: type
-                    }), 'dice');
-
-                    this.placeOnObject('die_' + this.nextDie, 'overall_player_board_' + this.getActivePlayerId());
-                    this.slideToObject('die_' + this.nextDie, 'aside_square_' + this.nextDieSetAside).play();
-                    dojo.addClass('die_' + this.nextDie, 'set_aside');
-                    dojo.addClass('die_' + this.nextDie, 'impossibleMove');
-                    this.nextDieSetAside += 1;
-                    this.nextDie += 1;
+                    this.placeOnObject('die_' + this.playAreaDiceCounter, dojo.query('#player_boards .player-board')[0]);
+                    this.slideToObject('die_' + this.playAreaDiceCounter, 'pa_square_' + this.playAreaDiceCounter).play();
+                    dojo.addClass('die_' + this.playAreaDiceCounter, 'play_area');
+                    this.playAreaDiceCounter += 1;
                 }
             },
 
@@ -214,24 +203,90 @@ define([
 
             doSetAsideAnimations: function (dice) {
                 dice.forEach((die) => {
-                    this.doSetAsideAnimation(die.jsclass, die.amount);
+                    if (die.amount !== 0) {
+                        this.doSetAsideAnimation(die.jsclass, die.amount);
+                    }
                 });
             },
 
-            doSetAsideAnimation: function (jsclass, amount) {
-                jsclass = '.dietype_' + jsclass + '.play_area'
+            doSetAsideAnimation: function (dieType, amount) {
+                jsclass = '.dietype_' + dieType + '.play_area';
+
                 for (i = 0; i < amount; i++) {
+                    // Move die to setAside area and change its classes
                     const die = dojo.query(jsclass)[0];
-                    this.slideToObject(die, 'aside_square_' + this.nextDieSetAside).play();
+
                     dojo.removeClass(die, 'play_area');
                     dojo.addClass(die, 'set_aside');
-                    this.nextDieSetAside += 1;
+                    this.slideWithAddingElements(die, dieType);
+                    this.setAsideDiceCounters[dieType] += 1;
+                    // Remove playArea square under this die
+                    this.playAreaDiceCounter -= 1;
+                    dojo.destroy('pa_square_' + this.playAreaDiceCounter);
                 }
+                // Play area squares shifted and we want to align dice to new positions
+                this.refreshDiceInPlayArea();
                 dojo.query('.set_aside').addClass('impossibleMove');
+            },
+
+            refreshDiceInPlayArea: function() {
+                this.playAreaDiceCounter = 1;
+                dojo.forEach(dojo.query('.die.play_area'), function (die) {
+                    dojo.removeAttr(die, 'id');
+                    dojo.setAttr(die, 'id', 'die_' + this.playAreaDiceCounter);
+                    this.slideToObject(die, 'pa_square_' + this.playAreaDiceCounter).play();
+                    this.playAreaDiceCounter += 1;
+                }.bind(this));
+            },
+
+            getAreaNameByClass: function(jsclass) {
+                if (['tank', 'deathray'].includes(jsclass)) {
+                    return jsclass;
+                }
+                if (this.mapping[jsclass] === undefined) {
+                    for (let die of ['e1', 'e2', 'e3']) {
+                        if (!Object.values(this.mapping).includes(die)) {
+                            this.mapping[jsclass] = die;
+                            break;
+                        }
+                    }
+                }
+                return this.mapping[jsclass];
             },
 
             findDieTypeClass: function(node) {
                 return Array.from(node.classList).find(value => /^dietype_/.test(value));
+            },
+
+            slideWithAddingElements: function(die, dieType) {
+                // Map earthlings and get the result, first should be in e1 area, second in e2, etc.
+                const areaId = this.getAreaNameByClass(dieType);
+
+                // Checking if we have element to slide to
+                const elementId = areaId + '_square_' + this.setAsideDiceCounters[dieType];
+                const element = dojo.byId(elementId);
+                // If there's no such element - let's add it!
+                if (element === null) {
+                    dojo.place(`<div id='${elementId}' class='${areaId}_square'></div>`, `${areaId}_area`);
+                }
+                this.slideToObject(die, elementId).play();
+            },
+
+            cleanupDiceAndPA: function() {
+                this.playAreaDiceCounter = 1;
+                this.setAsideDiceCounters = { ...this.setAsideDiceCountersNew };
+                this.mapping = {};
+                for (let i = 1; i <= this.maxDiceInAnyArea; i++) {
+                    dojo.destroy('pa_square_' + i);
+                    dojo.place(this.format_block('jstpl_pa_square', {
+                        n: i,
+                    }), 'play_area');
+                }
+                for (let i = this.maxDiceInAnyArea; i > 4; i--) {
+                    for (let area of ['e1', 'e2', 'e3']) {
+                        dojo.destroy(`${area}_square_${i}`);
+                    }
+                }
             },
 
             ///////////////////////////////////////////////////
@@ -283,7 +338,7 @@ define([
                     dice = dojo.query('.play_area');
                 } else {
                     dice = dojo.query('.die');
-                    this.nextDieSetAside = 1;
+                    this.setAsideDiceCounter = 1;
                 }
 
                 dojo.forEach(dice, function (die) {
@@ -294,10 +349,13 @@ define([
                             }
                         }).play();
                 });
-                this.nextDie = 1;
+                this.playAreaDiceCounter = 1;
                 dojo.forEach(dojo.query('.die'), function (die) {
                     dojo.removeAttr(die, 'id');
                 });
+                if (!notif.args.is_reroll){
+                    this.cleanupDiceAndPA();
+                }
                 this.placeNewDice(notif.args.dice);
                 this.updatePossibleMoves(notif.args.dice);
             },

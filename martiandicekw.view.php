@@ -34,19 +34,34 @@
   	function build_page( $viewArgs )
   	{
         $this->page->begin_block( "martiandicekw_martiandicekw", "pa_square" );
-        $this->page->begin_block( "martiandicekw_martiandicekw", "aside_square" );
+        $this->page->begin_block( "martiandicekw_martiandicekw", "tank_square" );
+        $this->page->begin_block( "martiandicekw_martiandicekw", "deathray_square" );
+        $this->page->begin_block( "martiandicekw_martiandicekw", "e1_square" );
+        $this->page->begin_block( "martiandicekw_martiandicekw", "e2_square" );
+        $this->page->begin_block( "martiandicekw_martiandicekw", "e3_square" );
 
-        $hor_scale = 57;
         for( $x=1; $x<=13; $x++ )
         {
             $this->page->insert_block( "pa_square", array(
                 'N' => $x,
-                'LEFT' => ($x-1)*$hor_scale,
             ));
-            $this->page->insert_block( "aside_square", array(
+            $this->page->insert_block( "tank_square", array(
                 'N' => $x,
-                'LEFT' => ($x-1)*$hor_scale,
-            ));     
+            ));
+            $this->page->insert_block( "deathray_square", array(
+                'N' => $x,
+            ));
+        }
+        for( $x=1; $x<=4; $x++ ) {
+            $this->page->insert_block("e1_square", array(
+                'N' => $x,
+            ));
+            $this->page->insert_block("e2_square", array(
+                'N' => $x,
+            ));
+            $this->page->insert_block("e3_square", array(
+                'N' => $x,
+            ));
         }
   	}
   }

@@ -28,22 +28,49 @@
 <div id="board">
     <div id="play_area">
         <!-- BEGIN pa_square -->
-            <div id="pa_square_{N}" class="pa_square" style="left: {LEFT}px; top: 1px;"></div>
+            <div id="pa_square_{N}" class="pa_square"></div>
         <!-- END pa_square -->
     </div>
+    <div></div>
     <div id="aside_area">
-        <!-- BEGIN aside_square -->
-            <div id="aside_square_{N}" class="aside_square" style="left: {LEFT}px; top: 57px;"></div>
-        <!-- END aside_square -->
+        <div id="earthlings">
+            <div id="e1_area">
+                <!-- BEGIN e1_square -->
+                <div id="e1_square_{N}" class="e1_square"></div>
+                <!-- END e1_square -->
+            </div>
+            <div id="e2_area">
+                <!-- BEGIN e2_square -->
+                <div id="e2_square_{N}" class="e2_square"></div>
+                <!-- END e2_square -->
+            </div>
+            <div id="e3_area">
+                <!-- BEGIN e3_square -->
+                <div id="e3_square_{N}" class="e3_square"></div>
+                <!-- END e3_square -->
+            </div>
+        </div>
+        <div id="military_area">
+            <div id="tank_area">
+                <!-- BEGIN tank_square -->
+                    <div id="tank_square_{N}" class="tank_square"></div>
+                <!-- END tank_square -->
+            </div>
+            <div id="deathray_area">
+                <!-- BEGIN deathray_square -->
+                    <div id="deathray_square_{N}" class="deathray_square"></div>
+                <!-- END deathray_square -->
+            </div>
+        </div>
     <div id="dice">
     </div>
     </div>
 </div>
 
-
 <script type="text/javascript">
 
 var jstpl_die='<div class="die dietype_${type}" id="die_${n}"></div>';
+var jstpl_pa_square='<div class="pa_square" id="pa_square_${n}"></div>';
 
 </script>  
 
