@@ -55,41 +55,32 @@ $stats_type = array(
         "turns_number" => array("id"=> 10,
                     "name" => totranslate("Number of turns"),
                     "type" => "int" ),
-
-/*
-        Examples:
-
-
-        "table_teststat1" => array(   "id"=> 10,
-                                "name" => totranslate("table test stat 1"), 
-                                "type" => "int" ),
-                                
-        "table_teststat2" => array(   "id"=> 11,
-                                "name" => totranslate("table test stat 2"), 
-                                "type" => "float" )
-*/  
     ),
-    
     // Statistics existing for each player
     "player" => array(
 
-        "turns_number" => array("id"=> 10,
-                    "name" => totranslate("Number of turns"),
-                    "type" => "int" ),
-    
-/*
-        Examples:    
-        
-        
-        "player_teststat1" => array(   "id"=> 10,
-                                "name" => totranslate("player test stat 1"), 
-                                "type" => "int" ),
-                                
-        "player_teststat2" => array(   "id"=> 11,
-                                "name" => totranslate("player test stat 2"), 
-                                "type" => "float" )
+        "timesDeathRayChosen" => array("id"=> 10,
+            "name" => totranslate("Number of times Death Rays were chosen"),
+            "type" => "int" ),
 
-*/    
+        "timesEarthlingsChosen" => array("id"=> 11,
+            "name" => totranslate("Number of times Earthlings (Humans, Cows and Chickens) were chosen"),
+            "type" => "int" ),
+
+        "timesEarthlingsAbducted" => array("id"=> 12,
+            "name" => totranslate("Number of times player abducted Earthlings"),
+            "type" => "int" ),
+
+        "timesTanksSucceeded" => array("id"=> 13,
+            "name" => totranslate("Number of times tanks succeeded"),
+            "type" => "int" ),
+
+        "amountOfBonusReceived" => array("id"=> 14,
+            "name" => totranslate("Number of bonus points received"),
+            "type" => "int" ),
+
+        "timesScoredZeroPoints" => array("id"=> 15,
+            "name" => totranslate("Number of times player defeated tanks without abducting anyone"),
+            "type" => "int" ),
     )
-
 );

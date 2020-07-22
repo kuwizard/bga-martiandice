@@ -37,19 +37,6 @@ define([
                 this.mapping = {};
             },
 
-            /*
-                setup:
-
-                This method must set up the game user interface according to current game situation specified
-                in parameters.
-
-                The method is called each time the game interface is displayed to a player, ie:
-                _ when the game starts
-                _ when a player refreshes the game page (F5)
-
-                "gamedatas" argument contains all datas retrieved by your "getAllDatas" PHP method.
-            */
-
             setup: function (gamedatas) {
                 console.log("Starting game setup");
 
@@ -80,9 +67,6 @@ define([
             ///////////////////////////////////////////////////
             //// Game & client states
 
-            // onEnteringState: this method is called each time we are entering into a new game state.
-            //                  You can use this method to perform some user interface changes at this moment.
-            //
             onEnteringState: function (stateName, args) {
                 console.log('Entering state: ' + stateName);
                 switch (stateName) {
@@ -168,17 +152,6 @@ define([
 
             ///////////////////////////////////////////////////
             //// Player's action
-
-            /*
-
-                Here, you are defining methods to handle player's action (ex: results of mouse click on
-                game objects).
-
-                Most of the time, these methods:
-                _ check the action is possible at this game state.
-                _ make a call to the game server
-
-            */
 
             updatePossibleMoves: function (dice) {
                 this.removeAllPossibleMoves();
@@ -292,15 +265,6 @@ define([
             ///////////////////////////////////////////////////
             //// Reaction to cometD notifications
 
-            /*
-                setupNotifications:
-
-                In this method, you associate each of your game notifications with your local method to handle it.
-
-                Note: game notification names correspond to "notifyAllPlayers" and "notifyPlayer" calls in
-                      your martiandicekw.game.php file.
-
-            */
             setupNotifications: function () {
                 console.log('notifications subscriptions setup');
                 dojo.subscribe('zeroScoring', this, "notif_scoring");
@@ -309,17 +273,6 @@ define([
                 this.notifqueue.setSynchronous('diceThrown', 1000);
                 dojo.subscribe('diceSetAside', this, "notif_diceSetAside");
                 this.notifqueue.setSynchronous('diceSetAside', 800);
-                // TODO: here, associate your game notifications with local methods
-
-                // Example 1: standard notification handling
-                // dojo.subscribe( 'cardPlayed', this, "notif_cardPlayed" );
-
-                // Example 2: standard notification handling + tell the user interface to wait
-                //            during 3 seconds after calling the method in order to let the players
-                //            see what is happening in the game.
-                // dojo.subscribe( 'cardPlayed', this, "notif_cardPlayed" );
-                // this.notifqueue.setSynchronous( 'cardPlayed', 3000 );
-                //
             },
 
             notif_diceSetAside: function (notif) {

@@ -103,6 +103,7 @@ class MartianDiceKW extends Table
         if ($count == null)
         {
             $count = self::TURN_START_DICE_AMOUNT;
+            self::incStat(1, 'turns_number');
         }
         self::fillTable('current_round', $count);
     }
@@ -204,6 +205,14 @@ class MartianDiceKW extends Table
         $sql .= " WHERE dice_type = " . $dice_type;
         self::DbQuery($sql);
 
+        if (in_array($dice_type, [CHICKEN, HUMAN, COW]))
+        {
+            self::incStat(1, 'timesEarthlingsChosen', self::getCurrentPlayerId());
+        } elseif ($dice_type == DEATH_RAY) {
+            self::incStat(1, 'timesDeathRayChosen', self::getCurrentPlayerId());
+        }
+
+
         self::notifyAllPlayers("diceSetAside", clienttranslate('${player_name} sets aside '.$amount.' ${dice_type_name}'), array(
             'player_name' => self::getActivePlayerName(),
             'dice_type_name' => $this->dicetypes[$dice_type]['name'],
@@ -212,15 +221,6 @@ class MartianDiceKW extends Table
         ));
     }
 
-    /*
-        getAllDatas: 
-        
-        Gather all informations about current game situation (visible by the current player).
-        
-        The method is called each time the game interface is displayed to a player, ie:
-        _ when the game starts
-        _ when a player refreshes the game page (F5)
-    */
     protected function getAllDatas()
     {
         $result = array();
@@ -330,6 +330,8 @@ class MartianDiceKW extends Table
         }, self::getSetAsideDice());
 
         if ($set_aside_dice[DEATH_RAY] < $set_aside_dice[TANK]) {
+            self::incStat(1, 'timesTanksSucceeded', self::getCurrentPlayerId());
+
             self::notifyAllPlayers("diceSetAside", clienttranslate('${player_name} fails to deal with the Earthling military and comes home empty-tentacled'), array(
                 'player_name' => self::getActivePlayerName(),
             ));
@@ -338,19 +340,28 @@ class MartianDiceKW extends Table
             $delta = $set_aside_dice[COW] + $set_aside_dice[CHICKEN] + $set_aside_dice[HUMAN];
             $all_three_types = $set_aside_dice[COW] > 0 && $set_aside_dice[CHICKEN] > 0 && $set_aside_dice[HUMAN] > 0;
             $ending = '';
-            if ($delta > 1)
+            if ($delta != 1)
             {
                 $ending = 's';
             }
-            $notif_message = clienttranslate('${player_name} successfully abducts ' . $delta . ' Earthling' . $ending);
+            if ($delta == 0)
+            {
+                $notif_message = clienttranslate('${player_name} successfully fended off Earthling military but failed to capture a single Earthling. Common, Commander, we need some material!');
+                self::incStat(1, 'timesScoredZeroPoints', self::getCurrentPlayerId());
+            } else {
+                $notif_message = clienttranslate('${player_name} successfully abducts ' . $delta . ' Earthling' . $ending);
+            }
+
             if ($all_three_types) {
                 $delta += 3;
                 $notif_message .= clienttranslate(" and receives 3 bonus points for having all three Earthling types");
+                self::incStat(3, 'amountOfBonusReceived', self::getCurrentPlayerId());
             }
 
-            $old_score = (int)self::getUniqueValueFromDB("SELECT player_score FROM player WHERE player_id = " . self::getActivePlayerId(), true);
-            $new_score = $old_score + $delta;
+            $new_score = (int)self::getUniqueValueFromDB("SELECT player_score FROM player WHERE player_id = " . self::getActivePlayerId(), true) + $delta;
             self::DbQuery("UPDATE player SET player_score = $new_score WHERE player_id = $player_id");
+
+            self::incStat(1, 'timesEarthlingsAbducted', self::getCurrentPlayerId());
 
             self::notifyAllPlayers("newScores", $notif_message, array(
                 'player_name' => self::getActivePlayerName(),
@@ -358,6 +369,7 @@ class MartianDiceKW extends Table
                 'new_score' => $new_score,
             ));
         }
+
         self::renewTable('current_round');
         self::renewTable('set_aside');
         if (max(self::getScores()) >= 25) {
@@ -370,28 +382,6 @@ class MartianDiceKW extends Table
 //////////// Game state arguments
 ////////////
 
-    /*
-        Here, you can create methods defined as "game state arguments" (see "args" property in states.inc.php).
-        These methods function is to return some additional information that is specific to the current
-        game state.
-    */
-
-    /*
-    
-    Example for game state "MyGameState":
-    
-    function argMyGameState()
-    {
-        // Get some values from the current game situation in database...
-    
-        // return values:
-        return array(
-            'variable1' => $value1,
-            'variable2' => $value2,
-            ...
-        );
-    }    
-    */
     function argPlayerTurn()
     {
         $set_aside = self::getAvailableDiceTypes();
