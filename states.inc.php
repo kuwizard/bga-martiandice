@@ -79,17 +79,25 @@ $machinestates = array(
         "type" => "activeplayer",
         "args" => "argPlayerTurn",
         "possibleactions" => array("diceSetAside", "endTurn"),
-        "transitions" => array("continueOrEnd" => 4, "nextPlayer" => 2, "gameEnd" => 99)
+        "transitions" => array("continueOrEnd" => 4, "nextPlayer" => 2, "tieBreakingOrEnd" => 5)
     ),
 
     4 => array(
         "name" => "continueOrEnd",
-        "description" => clienttranslate('${actplayer} may choose to '),
+        "description" => clienttranslate('${actplayer} may choose to roll all available dice or end the turn'),
         "descriptionmyturn" => clienttranslate('${you} may choose to '),
         "type" => "activeplayer",
         "args" => "argPlayerTurn",
         "possibleactions" => array("rerollDice", "endTurn"),
-        "transitions" => array("diceChoosing" => 3, "nextPlayer" => 2, "gameEnd" => 99)
+        "transitions" => array("diceChoosing" => 3, "nextPlayer" => 2, "tieBreakingOrEnd" => 5)
+    ),
+
+    5 => array(
+        "name" => "tieBreakingOrEnd",
+        "description" => clienttranslate('${actplayer} throws 6 dice to break a tie'),
+        "type" => "game",
+        "action" => "stThrowTieBreaker",
+        "transitions" => array("gameEnd" => 99)
     ),
    
     // Final state.

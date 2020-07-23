@@ -58,7 +58,6 @@ $stats_type = array(
     ),
     // Statistics existing for each player
     "player" => array(
-
         "timesDeathRayChosen" => array("id"=> 10,
             "name" => totranslate("Number of times Death Rays were chosen"),
             "type" => "int" ),

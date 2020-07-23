@@ -40,7 +40,7 @@ class MartianDiceKW extends Table
         parent::__construct();
 
         self::initGameStateLabels(array(
-            //    "my_first_global_variable" => 10,
+            "end_turn_notification_sent" => 10,
             //    "my_second_global_variable" => 11,
             //      ...
             //    "my_first_game_variant" => 100,
@@ -62,7 +62,6 @@ class MartianDiceKW extends Table
         // The number of colors defined here must correspond to the maximum number of players allowed for the gams
         $gameinfos = self::getGameinfos();
         $default_colors = $gameinfos['player_colors'];
-
         // Create players
         // Note: if you added some extra field on "player" table in the database (dbmodel.sql), you can initialize it there.
         $sql = "INSERT INTO player (player_id, player_color, player_canal, player_name, player_avatar) VALUES ";
@@ -79,16 +78,17 @@ class MartianDiceKW extends Table
         /************ Start the game initialization *****/
 
         // Init global values with their initial values
-        //self::setGameStateInitialValue( 'my_first_global_variable', 0 );
+        self::setGameStateInitialValue('end_turn_notification_sent', false);
 
         // Init game statistics
         // (note: statistics used in this file must be defined in your stats.inc.php file)
-        //self::initStat( 'table', 'table_teststat1', 0 );    // Init a table statistics
-        //self::initStat( 'player', 'player_teststat1', 0 );  // Init a player statistics (for all players)
-
-        // TODO: setup the initial game situation here
-
-
+        self::initStat('table', 'turns_number', 0);
+        self::initStat('player', 'timesDeathRayChosen', 0);
+        self::initStat('player', 'timesEarthlingsChosen', 0);
+        self::initStat('player', 'timesEarthlingsAbducted', 0);
+        self::initStat('player', 'timesTanksSucceeded', 0);
+        self::initStat('player', 'amountOfBonusReceived', 0);
+        self::initStat('player', 'timesScoredZeroPoints', 0);
         /************ End of the game initialization *****/
     }
 
@@ -178,18 +178,27 @@ class MartianDiceKW extends Table
         return self::integerize($scores);
     }
 
-    function integerize($object, $fields = null)
+    function addScoreToPlayer($player_id, $delta)
     {
-        foreach ($object as $j => &$value) {
-            if ($fields == null) {
-                $value = (int)$value;
-            } else {
-                foreach ($fields as $k => $field) {
-                    $value[$field] = (int)$value[$field];
-                }
-            }
-        }
-        return $object;
+        $new_score = (int)self::getUniqueValueFromDB("SELECT player_score FROM player WHERE player_id = " . $player_id, true) + $delta;
+        self::DbQuery("UPDATE player SET player_score = $new_score WHERE player_id = $player_id");
+        return $new_score;
+    }
+
+    function allPlayersPlayedThisRound() {
+        $players_left_in_round = self::getObjectListFromDB("SELECT player_id FROM player WHERE player_played_this_round = false", true);
+        return count($players_left_in_round) == 0;
+    }
+
+    function markPlayerAsPlayedThisRound()
+    {
+        $sql = "UPDATE player SET player_played_this_round = true WHERE player_id = " . self::getActivePlayerId();
+        self::DbQuery($sql);
+    }
+
+    function resetRound()
+    {
+        self::DbQuery("UPDATE player SET player_played_this_round = false");
     }
 
     function markAsSetAside($dice_type)
@@ -212,11 +221,10 @@ class MartianDiceKW extends Table
             self::incStat(1, 'timesDeathRayChosen', self::getCurrentPlayerId());
         }
 
-
         self::notifyAllPlayers("diceSetAside", clienttranslate('${player_name} sets aside '.$amount.' ${dice_type_name}'), array(
             'player_name' => self::getActivePlayerName(),
             'dice_type_name' => $this->dicetypes[$dice_type]['name'],
-            'dice_type_jsclass' => $this->dicetypes[$dice_type]['jsclass'],
+            'dice_type_jsclass' => self::jsclass($dice_type),
             'dice_amount' => $amount,
         ));
     }
@@ -248,10 +256,24 @@ class MartianDiceKW extends Table
 //////////// Utility functions
 ////////////    
 
-    /*
-        In this space, you can put any utility methods useful for your game logic
-    */
+    function integerize($object, $fields = null)
+    {
+        foreach ($object as $j => &$value) {
+            if ($fields == null) {
+                $value = (int)$value;
+            } else {
+                foreach ($fields as $k => $field) {
+                    $value[$field] = (int)$value[$field];
+                }
+            }
+        }
+        return $object;
+    }
 
+    function jsclass($dice_type)
+    {
+        return $this->dicetypes[$dice_type]['jsclass'];
+    }
 
 //////////////////////////////////////////////////////////////////////////////
 //////////// Player actions
@@ -271,7 +293,6 @@ class MartianDiceKW extends Table
                 self::notifyAllPlayers("newScores", clienttranslate('${player_name} sets aside all ' . self::TURN_START_DICE_AMOUNT . ' dice, their turn is over'), array(
                     'player_name' => self::getActivePlayerName(),
                 ));
-
                 self::endTurn();
             } else {
                 self::giveExtraTime(self::getActivePlayerId());
@@ -332,8 +353,11 @@ class MartianDiceKW extends Table
         if ($set_aside_dice[DEATH_RAY] < $set_aside_dice[TANK]) {
             self::incStat(1, 'timesTanksSucceeded', self::getCurrentPlayerId());
 
-            self::notifyAllPlayers("diceSetAside", clienttranslate('${player_name} fails to deal with the Earthling military and comes home empty-tentacled'), array(
+            self::notifyAllPlayers("runWinLoseAnimation", clienttranslate('${player_name} fails to deal with the Earthling military and comes home empty-tentacled'), array(
                 'player_name' => self::getActivePlayerName(),
+                'player_id' => self::getActivePlayerId(),
+                'winning_dice_type' => self::jsclass(TANK),
+                'losing_dice_type' => self::jsclass(DEATH_RAY),
             ));
         } else {
             $player_id = self::getCurrentPlayerId();
@@ -347,7 +371,7 @@ class MartianDiceKW extends Table
             if ($delta == 0)
             {
                 $notif_message = clienttranslate('${player_name} successfully fended off Earthling military but failed to capture a single Earthling. Common, Commander, we need some material!');
-                self::incStat(1, 'timesScoredZeroPoints', self::getCurrentPlayerId());
+                self::incStat(1, 'timesScoredZeroPoints', self::getActivePlayerId());
             } else {
                 $notif_message = clienttranslate('${player_name} successfully abducts ' . $delta . ' Earthling' . $ending);
             }
@@ -355,25 +379,47 @@ class MartianDiceKW extends Table
             if ($all_three_types) {
                 $delta += 3;
                 $notif_message .= clienttranslate(" and receives 3 bonus points for having all three Earthling types");
-                self::incStat(3, 'amountOfBonusReceived', self::getCurrentPlayerId());
+                self::incStat(3, 'amountOfBonusReceived', self::getActivePlayerId());
             }
 
-            $new_score = (int)self::getUniqueValueFromDB("SELECT player_score FROM player WHERE player_id = " . self::getActivePlayerId(), true) + $delta;
-            self::DbQuery("UPDATE player SET player_score = $new_score WHERE player_id = $player_id");
+            $new_score = self::addScoreToPlayer($player_id, $delta);
 
-            self::incStat(1, 'timesEarthlingsAbducted', self::getCurrentPlayerId());
+            self::incStat(1, 'timesEarthlingsAbducted', self::getActivePlayerId());
 
-            self::notifyAllPlayers("newScores", $notif_message, array(
+            self::notifyAllPlayers("runWinLoseAnimation", $notif_message, array(
                 'player_name' => self::getActivePlayerName(),
                 'player_id' => self::getActivePlayerId(),
+                'winning_dice_type' => self::jsclass(DEATH_RAY),
+                'losing_dice_type' => self::jsclass(TANK),
+            ));
+            self::notifyAllPlayers("newScores", '', array(
+                'player_name' => self::getActivePlayerName(),
+                'player_id' => self::getActivePlayerId(),
+                'dice_types_scored' => [self::jsclass(COW), self::jsclass(CHICKEN), self::jsclass(HUMAN)],
                 'new_score' => $new_score,
             ));
         }
 
-        self::renewTable('current_round');
+        self::markPlayerAsPlayedThisRound();
         self::renewTable('set_aside');
+        self::renewTable('current_round');
+
         if (max(self::getScores()) >= 25) {
-            $this->gamestate->nextState('gameEnd');
+            if (self::allPlayersPlayedThisRound())
+            {
+                $this->gamestate->nextState('tieBreakingOrEnd');
+            } else {
+                if (!self::getGameStateValue('end_turn_notification_sent')) {
+                    self::notifyAllPlayers("newScores", clienttranslate('${player_name} got more than 25 points, this is the last turn!'), array(
+                        'player_name' => self::getActivePlayerName(),
+                    ));
+                    self::setGameStateValue('end_turn_notification_sent', true);
+                }
+            }
+        }
+        if (self::allPlayersPlayedThisRound())
+        {
+            self::resetRound();
         }
         $this->gamestate->nextState('nextPlayer');
     }
@@ -412,6 +458,36 @@ class MartianDiceKW extends Table
             self::markAsSetAside(TANK);
         }
         $this->gamestate->nextState('diceChoosing');
+    }
+
+    function stThrowTieBreaker()
+    {
+        $tie_break_dice_amount = 6;
+        self::resetRound();
+
+        while (!self::allPlayersPlayedThisRound()) {
+            self::activeNextPlayer();
+            self::throwDice($tie_break_dice_amount);
+            $dice_thrown = self::getCurrentRoundDice();
+
+            self::notifyAllPlayers("diceThrown", '', array(
+                'dice' => $dice_thrown,
+                'is_reroll' => false,
+            ));
+
+            $death_rays_amount = self::getCurrentRoundDice()[DEATH_RAY]['amount'];
+            $new_score = self::addScoreToPlayer(self::getActivePlayerId(), $death_rays_amount);
+
+            self::notifyAllPlayers("newScoresTie", '${player_name} threw ' . $tie_break_dice_amount . ' dice to break a tie and got ' . $death_rays_amount . ' Death Rays', array(
+                'player_name' => self::getActivePlayerName(),
+                'player_id' => self::getActivePlayerId(),
+                'dice_types_scored' => [DEATH_RAY],
+                'new_score' => $new_score,
+            ));
+
+            self::markPlayerAsPlayedThisRound();
+        }
+        $this->gamestate->nextState('gameEnd');
     }
 //////////////////////////////////////////////////////////////////////////////
 //////////// Zombie

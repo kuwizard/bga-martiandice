@@ -197,18 +197,29 @@ define([
                     this.playAreaDiceCounter -= 1;
                     dojo.destroy('pa_square_' + this.playAreaDiceCounter);
                 }
-                // Play area squares shifted and we want to align dice to new positions
-                this.refreshDiceInPlayArea();
+                this.refreshDiceIdsInPlayArea();
+                this.refreshDiceIdsInAside();
                 dojo.query('.set_aside').addClass('impossibleMove');
             },
 
-            refreshDiceInPlayArea: function() {
+            refreshDiceIdsInPlayArea: function() {
                 this.playAreaDiceCounter = 1;
-                dojo.forEach(dojo.query('.die.play_area'), function (die) {
+                // Play area squares shifted and we want to align dice to new positions
+                dojo.forEach(dojo.query('.play_area'), function (die) {
                     dojo.removeAttr(die, 'id');
                     dojo.setAttr(die, 'id', 'die_' + this.playAreaDiceCounter);
                     this.slideToObject(die, 'pa_square_' + this.playAreaDiceCounter).play();
-                    this.playAreaDiceCounter += 1;
+                    this.playAreaDiceCounter++;
+                }.bind(this));
+            },
+
+            refreshDiceIdsInAside: function() {
+                // We need every die to have its id
+                var counter = this.playAreaDiceCounter;
+                dojo.forEach(dojo.query('.set_aside'), function (die) {
+                    dojo.removeAttr(die, 'id');
+                    dojo.setAttr(die, 'id', 'die_' + counter);
+                    counter++;
                 }.bind(this));
             },
 
@@ -269,10 +280,15 @@ define([
                 console.log('notifications subscriptions setup');
                 dojo.subscribe('zeroScoring', this, "notif_scoring");
                 dojo.subscribe('newScores', this, "notif_scoring");
+                this.notifqueue.setSynchronous('newScores', 700);
                 dojo.subscribe('diceThrown', this, "notif_diceThrown");
                 this.notifqueue.setSynchronous('diceThrown', 1000);
                 dojo.subscribe('diceSetAside', this, "notif_diceSetAside");
-                this.notifqueue.setSynchronous('diceSetAside', 800);
+                this.notifqueue.setSynchronous('diceSetAside', 700);
+                dojo.subscribe('newScoresTie', this, "notif_scoring");
+                this.notifqueue.setSynchronous('newScoresTie', 2000);
+                dojo.subscribe('runWinLoseAnimation', this, "notif_winLoseAnimation");
+                this.notifqueue.setSynchronous('runWinLoseAnimation', 800);
             },
 
             notif_diceSetAside: function (notif) {
@@ -280,8 +296,15 @@ define([
             },
 
             notif_scoring: function (notif) {
-                if (notif.args.new_score) {
-                    this.scoreCtrl[notif.args.player_id].toValue(notif.args.new_score);
+                const playerId = notif.args.player_id;
+                const newScore = notif.args.new_score;
+                const allTypes = '.set_aside.dietype_' + notif.args.dice_types_scored?.join(', .set_aside.dietype_');
+
+                dojo.forEach(dojo.query(allTypes), function (die) {
+                    this.slideToObject(die.id, 'overall_player_board_' + playerId).play();
+                }.bind(this));
+                if (newScore) {
+                    this.scoreCtrl[playerId].toValue(newScore);
                 }
             },
 
@@ -291,17 +314,11 @@ define([
                     dice = dojo.query('.play_area');
                 } else {
                     dice = dojo.query('.die');
-                    this.setAsideDiceCounter = 1;
                 }
 
                 dojo.forEach(dice, function (die) {
-                        dojo.fadeOut({
-                            node: die,
-                            onEnd: function (node) {
-                                dojo.destroy(node);
-                            }
-                        }).play();
-                });
+                    this.fadeOutAndDestroy(die);
+                }.bind(this));
                 this.playAreaDiceCounter = 1;
                 dojo.forEach(dojo.query('.die'), function (die) {
                     dojo.removeAttr(die, 'id');
@@ -310,7 +327,22 @@ define([
                     this.cleanupDiceAndPA();
                 }
                 this.placeNewDice(notif.args.dice);
+                this.refreshDiceIdsInAside();
                 this.updatePossibleMoves(notif.args.dice);
+            },
+
+            notif_winLoseAnimation: function (notif) {
+                const winning_type = notif.args.winning_dice_type;
+                const losing_type = notif.args.losing_dice_type;
+                var counter = 1;
+                dojo.forEach(dojo.query('.set_aside.dietype_' + winning_type), function (die) {
+                    const idToSlide = losing_type + '_square_' + counter;
+                    this.slideToObject(die.id, idToSlide, 1500).play();
+                    counter++;
+                }.bind(this));
+                dojo.forEach(dojo.query('.set_aside.dietype_' + losing_type), function (die) {
+                    this.fadeOutAndDestroy(die, 800);
+                }.bind(this));
             },
         });
     });
