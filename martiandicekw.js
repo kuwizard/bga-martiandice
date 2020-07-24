@@ -298,7 +298,13 @@ define([
             notif_scoring: function (notif) {
                 const playerId = notif.args.player_id;
                 const newScore = notif.args.new_score;
-                const allTypes = '.set_aside.dietype_' + notif.args.dice_types_scored?.join(', .set_aside.dietype_');
+                var allTypes = '';
+
+                if (notif.args.score_from_play_area) {
+                    allTypes = '.play_area.dietype_' + notif.args.dice_types_scored?.join(', .play_area.dietype_');
+                } else {
+                    allTypes = '.set_aside.dietype_' + notif.args.dice_types_scored?.join(', .set_aside.dietype_');
+                }
 
                 dojo.forEach(dojo.query(allTypes), function (die) {
                     this.slideToObject(die.id, 'overall_player_board_' + playerId).play();

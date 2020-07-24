@@ -180,7 +180,8 @@ class MartianDiceKW extends Table
 
     function addScoreToPlayer($player_id, $delta)
     {
-        $new_score = (int)self::getUniqueValueFromDB("SELECT player_score FROM player WHERE player_id = " . $player_id, true) + $delta;
+        $old_score = (int)self::getUniqueValueFromDB("SELECT player_score FROM player WHERE player_id = " . $player_id, true);
+        $new_score = $old_score + $delta;
         self::DbQuery("UPDATE player SET player_score = $new_score WHERE player_id = $player_id");
         return $new_score;
     }
@@ -190,15 +191,28 @@ class MartianDiceKW extends Table
         return count($players_left_in_round) == 0;
     }
 
-    function markPlayerAsPlayedThisRound()
+    function markPlayerAsPlayedThisRound($player_id)
     {
-        $sql = "UPDATE player SET player_played_this_round = true WHERE player_id = " . self::getActivePlayerId();
-        self::DbQuery($sql);
+        self::DbQuery("UPDATE player SET player_played_this_round = true WHERE player_id = " . $player_id);
     }
 
     function resetRound()
     {
         self::DbQuery("UPDATE player SET player_played_this_round = false");
+    }
+
+    function getWinningPlayerCount()
+    {
+        $max_score = max(self::getScores());
+        $winning_players = self::getObjectListFromDB("SELECT player_id FROM player WHERE player_score = " . $max_score, true);
+        return count($winning_players);
+    }
+
+    function isPlayerWinning($player_id)
+    {
+        $max_score = max(self::getScores());
+        $current_user_score = (int)self::getUniqueValueFromDB("SELECT player_score FROM player WHERE player_id = " . $player_id, true);
+        return $max_score == $current_user_score;
     }
 
     function markAsSetAside($dice_type)
@@ -221,9 +235,14 @@ class MartianDiceKW extends Table
             self::incStat(1, 'timesDeathRayChosen', self::getCurrentPlayerId());
         }
 
+        if ($amount == 1) {
+            $dice_type_name = $this->dicetypes[$dice_type]['name'];
+        } else {
+            $dice_type_name = $this->dicetypes[$dice_type]['name_plural'];
+        }
         self::notifyAllPlayers("diceSetAside", clienttranslate('${player_name} sets aside '.$amount.' ${dice_type_name}'), array(
             'player_name' => self::getActivePlayerName(),
-            'dice_type_name' => $this->dicetypes[$dice_type]['name'],
+            'dice_type_name' => $dice_type_name,
             'dice_type_jsclass' => self::jsclass($dice_type),
             'dice_amount' => $amount,
         ));
@@ -364,16 +383,18 @@ class MartianDiceKW extends Table
             $delta = $set_aside_dice[COW] + $set_aside_dice[CHICKEN] + $set_aside_dice[HUMAN];
             $all_three_types = $set_aside_dice[COW] > 0 && $set_aside_dice[CHICKEN] > 0 && $set_aside_dice[HUMAN] > 0;
             $ending = '';
-            if ($delta != 1)
+            if ($delta == 1)
             {
-                $ending = 's';
+                $ending = clienttranslate('Earthling');
+            } else {
+                $ending = clienttranslate('Earthlings');
             }
             if ($delta == 0)
             {
                 $notif_message = clienttranslate('${player_name} successfully fended off Earthling military but failed to capture a single Earthling. Common, Commander, we need some material!');
                 self::incStat(1, 'timesScoredZeroPoints', self::getActivePlayerId());
             } else {
-                $notif_message = clienttranslate('${player_name} successfully abducts ' . $delta . ' Earthling' . $ending);
+                $notif_message = clienttranslate('${player_name} successfully abducts ' . $delta . ' ' . $ending);
             }
 
             if ($all_three_types) {
@@ -400,7 +421,7 @@ class MartianDiceKW extends Table
             ));
         }
 
-        self::markPlayerAsPlayedThisRound();
+        self::markPlayerAsPlayedThisRound(self::getActivePlayerId());
         self::renewTable('set_aside');
         self::renewTable('current_round');
 
@@ -464,28 +485,38 @@ class MartianDiceKW extends Table
     {
         $tie_break_dice_amount = 6;
         self::resetRound();
+        if (self::getWinningPlayerCount() > 1) {
+            while (!self::allPlayersPlayedThisRound()) {
+                self::activeNextPlayer();
+                $active_player = self::getActivePlayerId();
+                if (self::isPlayerWinning($active_player)) {
+                    self::throwDice($tie_break_dice_amount);
+                    $dice_thrown = self::getCurrentRoundDice();
 
-        while (!self::allPlayersPlayedThisRound()) {
-            self::activeNextPlayer();
-            self::throwDice($tie_break_dice_amount);
-            $dice_thrown = self::getCurrentRoundDice();
+                    self::notifyAllPlayers("diceThrown", '', array(
+                        'dice' => $dice_thrown,
+                        'is_reroll' => false,
+                    ));
 
-            self::notifyAllPlayers("diceThrown", '', array(
-                'dice' => $dice_thrown,
-                'is_reroll' => false,
-            ));
+                    $death_rays_amount = self::getCurrentRoundDice()[DEATH_RAY]['amount'];
+                    $new_score = self::addScoreToPlayer($active_player, $death_rays_amount);
+                    if ($death_rays_amount == 1)
+                    {
+                        $ending = clienttranslate('Death Ray');
+                    } else {
+                        $ending = clienttranslate('Death Rays');
+                    }
 
-            $death_rays_amount = self::getCurrentRoundDice()[DEATH_RAY]['amount'];
-            $new_score = self::addScoreToPlayer(self::getActivePlayerId(), $death_rays_amount);
-
-            self::notifyAllPlayers("newScoresTie", '${player_name} threw ' . $tie_break_dice_amount . ' dice to break a tie and got ' . $death_rays_amount . ' Death Rays', array(
-                'player_name' => self::getActivePlayerName(),
-                'player_id' => self::getActivePlayerId(),
-                'dice_types_scored' => [DEATH_RAY],
-                'new_score' => $new_score,
-            ));
-
-            self::markPlayerAsPlayedThisRound();
+                    self::notifyAllPlayers("newScoresTie", clienttranslate('${player_name} threw ' . $tie_break_dice_amount . ' dice to break a tie and got ' . $death_rays_amount . ' ' . $ending), array(
+                        'player_name' => self::getActivePlayerName(),
+                        'player_id' => $active_player,
+                        'dice_types_scored' => [self::jsclass(DEATH_RAY)],
+                        'new_score' => $new_score,
+                        'score_from_play_area' => true,
+                    ));
+                }
+                self::markPlayerAsPlayedThisRound($active_player);
+            }
         }
         $this->gamestate->nextState('gameEnd');
     }
