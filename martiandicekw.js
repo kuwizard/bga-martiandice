@@ -302,9 +302,9 @@ define([
                 var allTypes = '';
 
                 if (notif.args.score_from_play_area) {
-                    allTypes = '.play_area.dietype_' + notif.args.dice_types_scored?.join(', .play_area.dietype_');
+                    allTypes = '.play_area.dietype_' + notif.args.dice_types_scored.join(', .play_area.dietype_');
                 } else {
-                    allTypes = '.set_aside.dietype_' + notif.args.dice_types_scored?.join(', .set_aside.dietype_');
+                    allTypes = '.set_aside.dietype_' + notif.args.dice_types_scored.join(', .set_aside.dietype_');
                 }
 
                 dojo.forEach(dojo.query(allTypes), function (die) {

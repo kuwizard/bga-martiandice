@@ -397,7 +397,7 @@ class MartianDiceKW extends Table
             }
             if ($delta == 0)
             {
-                $notif_message = clienttranslate('${player_name} successfully fended off Earthling military but failed to capture a single Earthling. Common, Commander, we need some material!');
+                $notif_message = clienttranslate('${player_name} successfully fended off Earthling military but failed to capture a single Earthling. Common, Commander, we need some samples!');
                 self::incStat(1, 'timesScoredZeroPoints', self::getActivePlayerId());
             } else {
                 $notif_message = clienttranslate('${player_name} successfully abducts ' . $delta . ' ' . $ending);
