@@ -215,6 +215,11 @@ class MartianDiceKW extends Table
         return $max_score == $current_user_score;
     }
 
+    function isPlayerZombie($player_id)
+    {
+        return self::getUniqueValueFromDB("SELECT player_zombie FROM player WHERE player_id = " . $player_id, true);
+    }
+
     function markAsSetAside($dice_type)
     {
         $sql = "SELECT amount FROM current_round WHERE dice_type = " . $dice_type;
@@ -382,7 +387,6 @@ class MartianDiceKW extends Table
             $player_id = self::getCurrentPlayerId();
             $delta = $set_aside_dice[COW] + $set_aside_dice[CHICKEN] + $set_aside_dice[HUMAN];
             $all_three_types = $set_aside_dice[COW] > 0 && $set_aside_dice[CHICKEN] > 0 && $set_aside_dice[HUMAN] > 0;
-            $ending = '';
             if ($delta == 1)
             {
                 $ending = clienttranslate('Earthling');
@@ -420,10 +424,15 @@ class MartianDiceKW extends Table
                 'new_score' => $new_score,
             ));
         }
-
-        self::markPlayerAsPlayedThisRound(self::getActivePlayerId());
         self::renewTable('set_aside');
         self::renewTable('current_round');
+
+        self::endGameIfNeeded();
+    }
+
+    function endGameIfNeeded()
+    {
+        self::markPlayerAsPlayedThisRound(self::getActivePlayerId());
 
         if (max(self::getScores()) >= 25) {
             if (self::allPlayersPlayedThisRound())
@@ -466,17 +475,18 @@ class MartianDiceKW extends Table
     function stThrowAllDice()
     {
         self::activeNextPlayer();
-        self::throwDice();
-        $dice_thrown = self::getCurrentRoundDice();
+        if (!self::isPlayerZombie(self::getActivePlayerId())) {
+            self::throwDice();
+            $dice_thrown = self::getCurrentRoundDice();
 
-        self::notifyAllPlayers("diceThrown", '', array(
-            'dice' => $dice_thrown,
-            'is_reroll' => false,
-        ));
+            self::notifyAllPlayers("diceThrown", '', array(
+                'dice' => $dice_thrown,
+                'is_reroll' => false,
+            ));
 
-        if ($dice_thrown[TANK]['amount'] > 0)
-        {
-            self::markAsSetAside(TANK);
+            if ($dice_thrown[TANK]['amount'] > 0) {
+                self::markAsSetAside(TANK);
+            }
         }
         $this->gamestate->nextState('diceChoosing');
     }
@@ -540,21 +550,18 @@ class MartianDiceKW extends Table
     function zombieTurn($state, $active_player)
     {
         $statename = $state['name'];
-
         if ($state['type'] === "activeplayer") {
             switch ($statename) {
+                case 'diceChoosing':
+                    $this->gamestate->nextState("continueOrEnd");
+                    break;
+                case 'continueOrEnd':
+                    self::endGameIfNeeded();
+                    break;
                 default:
                     $this->gamestate->nextState("zombiePass");
                     break;
             }
-
-            return;
-        }
-
-        if ($state['type'] === "multipleactiveplayer") {
-            // Make sure player is in a non blocking status for role turn
-            $this->gamestate->setPlayerNonMultiactive($active_player, '');
-
             return;
         }
 

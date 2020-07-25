@@ -44,9 +44,7 @@ $gameinfos = array(
 'suggest_player_number' => 3,
 
 // Discourage players to play with these numbers of players. Must be null if there is no such advice.
-'not_recommend_player_number' => null,
-// 'not_recommend_player_number' => array( 2, 3 ),      // <= example: this is not recommended to play this game with 2 or 3 players
-
+'not_recommend_player_number' => array(6,7,8,9,10),
 
 // Estimated game duration, in minutes (used only for the launch, afterward the real duration is computed)
 'estimated_duration' => 10,           
@@ -76,8 +74,7 @@ $gameinfos = array(
 'is_beta' => 1,                     
 
 // Is this game cooperative (all players wins together or loose together)
-'is_coop' => 0, 
-
+'is_coop' => 0,
 
 // Complexity of the game, from 0 (extremely simple) to 5 (extremely complex)
 'complexity' => 0,    
@@ -135,7 +132,7 @@ $gameinfos = array(
 //  http://en.doc.boardgamearena.com/Game_meta-information:_gameinfos.inc.php
 //  IMPORTANT: this list should be ORDERED, with the most important tag first.
 //  IMPORTANT: it is mandatory that the FIRST tag is 1, 2, 3 and 4 (= game category)
-'tags' => array( 2 ),
+'tags' => array(2, 10, 101, 201),
 
 
 //////// BGA SANDBOX ONLY PARAMETERS (DO NOT MODIFY)
