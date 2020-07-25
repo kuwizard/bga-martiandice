@@ -160,7 +160,7 @@ define([
                 dice.filter((die) => die.choosable === '1').forEach((die) => {
                     const jsclass = '.dietype_' + die.jsclass;
                     dojo.query(`${jsclass}.play_area`).removeClass('impossibleMove');
-                    this.addTooltipToClass(`${jsclass}:not(.impossibleMove)`, '', _('Choose all ' + die.name));
+                    this.addTooltipToClass(`${jsclass}:not(.impossibleMove)`, '', _(`${die.tooltip} ${die.name_plural}`));
                 });
             },
 
@@ -191,6 +191,7 @@ define([
 
                     dojo.removeClass(die, 'play_area');
                     dojo.addClass(die, 'set_aside');
+                    this.removeTooltip(die.id);
                     this.slideWithAddingElements(die, dieType);
                     this.setAsideDiceCounters[dieType] += 1;
                     // Remove playArea square under this die

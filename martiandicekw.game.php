@@ -157,7 +157,9 @@ class MartianDiceKW extends Table
     function addDiceTypes($array)
     {
         return array_map(function ($die) {
-            return array_merge($die, $this->dicetypes[$die['type']]);
+            $types_added = array_merge($die, $this->dicetypes[$die['type']]);
+            $types_added['tooltip'] = clienttranslate('Choose all');
+            return $types_added;
         }, $array);
     }
 
