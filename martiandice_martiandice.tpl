@@ -3,13 +3,13 @@
 <!-- 
 --------
 -- BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
--- MartianDiceKW implementation : © Pavel Kulagin kuzwiz@mail.ru
+-- MartianDice implementation : © Pavel Kulagin kuzwiz@mail.ru
 -- 
 -- This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
 -- See http://en.boardgamearena.com/#!doc/Studio for more information.
 -------
 
-    martiandicekw_martiandicekw.tpl
+    martiandice_martiandice.tpl
     
     This is the HTML template of your game.
     

@@ -1,15 +1,15 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * MartianDiceKW implementation : © Pavel Kulagin kuzwiz@mail.ru
+ * MartianDice implementation : © Pavel Kulagin kuzwiz@mail.ru
  *
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
  * -----
  *
- * martiandicekw.js
+ * martiandice.js
  *
- * MartianDiceKW user interface script
+ * MartianDice user interface script
  *
  * In this file, you are describing the logic of your user interface, in Javascript language.
  *
@@ -21,9 +21,9 @@ define([
         "ebg/counter"
     ],
     function (dojo, declare) {
-        return declare("bgagame.martiandicekw", ebg.core.gamegui, {
+        return declare("bgagame.martiandice", ebg.core.gamegui, {
             constructor: function () {
-                console.log('martiandicekw constructor');
+                console.log('martiandice constructor');
                 this.maxDiceInAnyArea = 13;
                 this.playAreaDiceCounter = 1;
                 this.setAsideDiceCountersNew = {
@@ -103,7 +103,7 @@ define([
 
                 if (this.checkAction('diceSetAside'))    // Check that this action is possible at this moment
                 {
-                    this.ajaxcall("/martiandicekw/martiandicekw/diceSetAside.html", {
+                    this.ajaxcall("/martiandice/martiandice/diceSetAside.html", {
                         dice_type: this.findDieTypeClass(evt.currentTarget)
                     }, this, function (result) {
                     });
@@ -113,7 +113,7 @@ define([
             onRerollDice: function (evt) {
                 dojo.stopEvent(evt);
                 if (this.checkAction('rerollDice')) {
-                    this.ajaxcall("/martiandicekw/martiandicekw/rerollDice.html", {}, this, function (result) {
+                    this.ajaxcall("/martiandice/martiandice/rerollDice.html", {}, this, function (result) {
                     });
                 }
             },
@@ -121,7 +121,7 @@ define([
             onEndTurn: function (evt) {
                 dojo.stopEvent(evt);
                 if (this.checkAction('endTurn')) {
-                    this.ajaxcall("/martiandicekw/martiandicekw/endTurn.html", {}, this, function (result) {
+                    this.ajaxcall("/martiandice/martiandice/endTurn.html", {}, this, function (result) {
                     });
                 }
             },

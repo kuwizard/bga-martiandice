@@ -2,13 +2,13 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * MartianDiceKW implementation : © Pavel Kulagin kuzwiz@mail.ru
+ * MartianDice implementation : © Pavel Kulagin kuzwiz@mail.ru
  *
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
  * -----
  *
- * martiandicekw.game.php
+ * martiandice.game.php
  *
  * This is the main file for your game logic.
  *
@@ -25,7 +25,7 @@ define('TANK', 2);
 define('CHICKEN', 3);
 define('HUMAN', 4);
 
-class MartianDiceKW extends Table
+class MartianDice extends Table
 {
     const TURN_START_DICE_AMOUNT = 13;
 
@@ -52,7 +52,7 @@ class MartianDiceKW extends Table
     protected function getGameName()
     {
         // Used for translations and stuff. Please do not modify.
-        return "martiandicekw";
+        return "martiandice";
     }
 
     protected function setupNewGame($players, $options = array())
