@@ -71,7 +71,7 @@ $stats_type = array(
             "type" => "int" ),
 
         "timesTanksSucceeded" => array("id"=> 13,
-            "name" => totranslate("Number of times tanks succeeded"),
+            "name" => totranslate("Number of times player fled without abductees"),
             "type" => "int" ),
 
         "amountOfBonusReceived" => array("id"=> 14,
