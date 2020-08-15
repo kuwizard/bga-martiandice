@@ -71,6 +71,7 @@
 
 var jstpl_die='<div class="die dietype_${type}" id="die_${n}"></div>';
 var jstpl_pa_square='<div class="pa_square" id="pa_square_${n}"></div>';
+var jstpl_turn_order = '<div class="turn-order" style="color:#${color}">${order}</div>';
 
 </script>  
 

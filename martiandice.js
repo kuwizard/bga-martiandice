@@ -53,16 +53,18 @@ define([
 
                 this.doSetAsideAnimations(gamedatas.set_aside_dice);
                 this.updatePossibleMoves(gamedatas.current_round_dice);
-
-                // TODO: Set up your game interface here, according to "gamedatas"
+                gamedatas.playerorder = gamedatas.playerorder.map(String);
+                Object.entries(gamedatas.players).forEach(([player_id, player_data], index) => {
+                    const player_panel = $('player_board_' + player_id);
+                    const order = gamedatas.playerorder.indexOf(player_id) + 1;
+                    dojo.place(this.format_block('jstpl_turn_order', {'order': order, 'color': player_data.color}), player_panel);
+                });
 
                 // Setup game notifications to handle (see "setupNotifications" method below)
                 this.setupNotifications();
 
                 console.log("Ending game setup");
             },
-
-
 
             ///////////////////////////////////////////////////
             //// Game & client states
