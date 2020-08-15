@@ -57,7 +57,12 @@ define([
                 Object.entries(gamedatas.players).forEach(([player_id, player_data], index) => {
                     const player_panel = $('player_board_' + player_id);
                     const order = gamedatas.playerorder.indexOf(player_id) + 1;
-                    dojo.place(this.format_block('jstpl_turn_order', {'order': order, 'color': player_data.color}), player_panel);
+                    if (order !== 0) {
+                        dojo.place(this.format_block('jstpl_turn_order', {
+                            'order': order,
+                            'color': player_data.color
+                        }), player_panel);
+                    }
                 });
 
                 // Setup game notifications to handle (see "setupNotifications" method below)
