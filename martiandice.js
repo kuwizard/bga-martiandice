@@ -35,6 +35,7 @@ define([
                 };
                 this.setAsideDiceCounters = {};
                 this.mapping = {};
+                this.isStupidToEndTurn = true;
             },
 
             setup: function (gamedatas) {
@@ -130,9 +131,20 @@ define([
             onEndTurn: function (evt) {
                 dojo.stopEvent(evt);
                 if (this.checkAction('endTurn')) {
-                    this.ajaxcall("/martiandice/martiandice/endTurn.html", {}, this, function (result) {
-                    });
+                    if (this.isStupidToEndTurn) {
+                        this.confirmationDialog(_('Hey, you won\'t get any points if you end this turn now but you still can win! ' +
+                            'Are you sure you want to end this turn?'),
+                            dojo.hitch(this, () => this.callEndTurnAjax())
+                        );
+                    } else {
+                        this.callEndTurnAjax();
+                    }
                 }
+            },
+
+            callEndTurnAjax: function () {
+                this.ajaxcall("/martiandice/martiandice/endTurn.html", {}, this, function (result) {
+                })
             },
 
             ///////////////////////////////////////////////////
@@ -303,6 +315,9 @@ define([
 
             notif_diceSetAside: function (notif) {
                 this.doSetAsideAnimation(notif.args.dice_type_jsclass, notif.args.dice_amount);
+                if (notif.args.is_stupid_to_end_turn !== undefined) {
+                    this.isStupidToEndTurn = notif.args.is_stupid_to_end_turn;
+                }
             },
 
             notif_scoring: function (notif) {

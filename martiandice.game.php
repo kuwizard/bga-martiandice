@@ -154,6 +154,13 @@ class MartianDice extends Table
         return self::integerize($set_aside_dice, array('amount'));
     }
 
+    function getSetAsideDiceAmounts()
+    {
+        return array_map(function ($element) {
+            return $element['amount'];
+        }, self::getSetAsideDice());
+    }
+
     function addDiceTypes($array)
     {
         return array_map(function ($die) {
@@ -172,6 +179,25 @@ class MartianDice extends Table
     function getSetAsideSum()
     {
         return (int)self::getUniqueValueFromDB("SELECT SUM(amount) FROM set_aside", true);
+    }
+
+    function isStupidToEndTurnNow()
+    {
+        $available_dice = (int)self::getUniqueValueFromDB("SELECT SUM(amount) FROM current_round", true);
+        $tanks_set_aside = (int)self::getUniqueValueFromDB("SELECT amount FROM set_aside WHERE dice_type = ".TANK, true);
+        $death_rays_set_aside = (int)self::getUniqueValueFromDB("SELECT amount FROM set_aside WHERE dice_type = ".DEATH_RAY, true);
+        $user_can_win_this_turn = $available_dice + $death_rays_set_aside >= $tanks_set_aside;
+        var_dump('User can win');
+        var_dump($user_can_win_this_turn);
+        var_dump('self::isMoreTanksThanDeathRays()');
+        var_dump(self::isMoreTanksThanDeathRays());
+        return $user_can_win_this_turn && self::isMoreTanksThanDeathRays();
+    }
+
+    function isMoreTanksThanDeathRays()
+    {
+        $set_aside_dice = self::getSetAsideDiceAmounts();
+        return $set_aside_dice[TANK] > $set_aside_dice[DEATH_RAY];
     }
 
     function getScores()
@@ -247,11 +273,13 @@ class MartianDice extends Table
         } else {
             $dice_type_name = $this->dicetypes[$dice_type]['name_plural'];
         }
+        $is_stupid_to_end_turn = self::isStupidToEndTurnNow();
         self::notifyAllPlayers("diceSetAside", clienttranslate('${player_name} sets aside '.$amount.' ${dice_type_name}'), array(
             'player_name' => self::getActivePlayerName(),
             'dice_type_name' => $dice_type_name,
             'dice_type_jsclass' => self::jsclass($dice_type),
             'dice_amount' => $amount,
+            'is_stupid_to_end_turn' => $is_stupid_to_end_turn,
         ));
     }
 
@@ -371,21 +399,14 @@ class MartianDice extends Table
     {
         self::checkAction('endTurn');
 
-        $set_aside_dice = array_map(function ($element) {
-            return $element['amount'];
-        }, self::getSetAsideDice());
-
-        if ($set_aside_dice[DEATH_RAY] < $set_aside_dice[TANK]) {
+        if (self::isMoreTanksThanDeathRays()) {
             self::incStat(1, 'timesTanksSucceeded', self::getCurrentPlayerId());
 
-            self::notifyAllPlayers("runWinLoseAnimation", clienttranslate('${player_name} fails to deal with the Earthling military and comes home empty-tentacled'), array(
-                'player_name' => self::getActivePlayerName(),
-                'player_id' => self::getActivePlayerId(),
-                'winning_dice_type' => self::jsclass(TANK),
-                'losing_dice_type' => self::jsclass(DEATH_RAY),
-            ));
+            $notif_message = clienttranslate('${player_name} fails to deal with the Earthling military and comes home empty-tentacled');
+            self::runWinLoseAnimation($notif_message, TANK, DEATH_RAY);
         } else {
             $player_id = self::getCurrentPlayerId();
+            $set_aside_dice = self::getSetAsideDiceAmounts();
             $delta = $set_aside_dice[COW] + $set_aside_dice[CHICKEN] + $set_aside_dice[HUMAN];
             $all_three_types = $set_aside_dice[COW] > 0 && $set_aside_dice[CHICKEN] > 0 && $set_aside_dice[HUMAN] > 0;
             if ($delta == 1)
@@ -412,12 +433,7 @@ class MartianDice extends Table
 
             self::incStat(1, 'timesEarthlingsAbducted', self::getActivePlayerId());
 
-            self::notifyAllPlayers("runWinLoseAnimation", $notif_message, array(
-                'player_name' => self::getActivePlayerName(),
-                'player_id' => self::getActivePlayerId(),
-                'winning_dice_type' => self::jsclass(DEATH_RAY),
-                'losing_dice_type' => self::jsclass(TANK),
-            ));
+            self::runWinLoseAnimation($notif_message, DEATH_RAY, TANK);
             self::notifyAllPlayers("newScores", '', array(
                 'player_name' => self::getActivePlayerName(),
                 'player_id' => self::getActivePlayerId(),
@@ -429,6 +445,16 @@ class MartianDice extends Table
         self::renewTable('current_round');
 
         self::endGameIfNeeded();
+    }
+
+    function runWinLoseAnimation($message, $winning_type, $losing_type)
+    {
+        self::notifyAllPlayers("runWinLoseAnimation", $message, array(
+            'player_name' => self::getActivePlayerName(),
+            'player_id' => self::getActivePlayerId(),
+            'winning_dice_type' => self::jsclass($winning_type),
+            'losing_dice_type' => self::jsclass($losing_type),
+        ));
     }
 
     function endGameIfNeeded()
