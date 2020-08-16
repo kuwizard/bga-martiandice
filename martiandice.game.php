@@ -290,6 +290,7 @@ class MartianDice extends Table
         $result['set_aside_dice'] = self::getSetAsideDice();
         $result['current_round_dice'] = self::getCurrentRoundDice();
         $result['dice_types'] = $this->dicetypes;
+        $result['turn_order'] = $this->getTableOrder();
 
         return $result;
     }
@@ -323,6 +324,21 @@ class MartianDice extends Table
     function jsclass($dice_type)
     {
         return $this->dicetypes[$dice_type]['jsclass'];
+    }
+
+    function getTableOrder() {
+        $table  = $this->getNextPlayerTable();
+        $result = array();
+
+        $nb_players = count($table) - 1;
+        $previous = $table[0];
+
+        for ($i = 1 ; $i <= $nb_players ; $i++ ) {
+            $result[$previous] = $i;
+            $previous = $table[$previous];
+        }
+
+        return $result;
     }
 
 //////////////////////////////////////////////////////////////////////////////
