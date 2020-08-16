@@ -187,10 +187,6 @@ class MartianDice extends Table
         $tanks_set_aside = (int)self::getUniqueValueFromDB("SELECT amount FROM set_aside WHERE dice_type = ".TANK, true);
         $death_rays_set_aside = (int)self::getUniqueValueFromDB("SELECT amount FROM set_aside WHERE dice_type = ".DEATH_RAY, true);
         $user_can_win_this_turn = $available_dice + $death_rays_set_aside >= $tanks_set_aside;
-        var_dump('User can win');
-        var_dump($user_can_win_this_turn);
-        var_dump('self::isMoreTanksThanDeathRays()');
-        var_dump(self::isMoreTanksThanDeathRays());
         return $user_can_win_this_turn && self::isMoreTanksThanDeathRays();
     }
 
