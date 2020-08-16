@@ -136,7 +136,7 @@ class MartianDice extends Table
         }
 
         $sql .= implode($sql_values, ',');
-        $sql .= "ON DUPLICATE KEY UPDATE dice_type = VALUES(dice_type), amount = VALUES(amount)";
+        $sql .= " ON DUPLICATE KEY UPDATE dice_type = VALUES(dice_type), amount = VALUES(amount)";
         self::DbQuery($sql);
     }
 
@@ -340,10 +340,6 @@ class MartianDice extends Table
             // If there's nothing to set aside - end turn
             $current_round_dice = self::getCurrentRoundDice();
 
-            $available_dice = array_filter($current_round_dice, function ($i) {
-                return $i['amount'] > 0 && $i['choosable'] == '1';
-            });
-
             self::notifyAllPlayers("diceThrown", '', array(
                 'dice' => $current_round_dice,
                 'is_reroll' => true,
@@ -354,6 +350,9 @@ class MartianDice extends Table
                 self::markAsSetAside(TANK);
             }
 
+            $available_dice = array_filter($current_round_dice, function ($i) {
+                return $i['amount'] > 0 && $i['choosable'] == '1';
+            });
             if (empty($available_dice)) {
                 self::notifyAllPlayers("newScores", clienttranslate('${player_name} cannot set aside any dice after reroll, their turn is over'), array(
                     'player_name' => self::getActivePlayerName(),

@@ -54,6 +54,8 @@ define([
                 this.doSetAsideAnimations(gamedatas.set_aside_dice);
                 this.updatePossibleMoves(gamedatas.current_round_dice);
                 gamedatas.playerorder = gamedatas.playerorder.map(String);
+
+                // Draw turn order on players' boards
                 Object.entries(gamedatas.players).forEach(([player_id, player_data], index) => {
                     const player_panel = $('player_board_' + player_id);
                     const order = gamedatas.playerorder.indexOf(player_id) + 1;
@@ -333,6 +335,7 @@ define([
                 }
 
                 dojo.forEach(dice, function (die) {
+                    dojo.removeClass(die, 'play_area')
                     this.fadeOutAndDestroy(die);
                 }.bind(this));
                 this.playAreaDiceCounter = 1;

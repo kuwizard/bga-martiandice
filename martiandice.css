@@ -28,6 +28,11 @@
     position: relative;
 }
 
+.logs_on_additional_column #play_area {
+    max-width: 525px;
+    flex-wrap: wrap;
+}
+
 #tank_area, #deathray_area {
     height: fit-content;
 }
