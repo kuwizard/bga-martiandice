@@ -62,9 +62,12 @@
                 <!-- END deathray_square -->
             </div>
         </div>
+    </div>
     <div id="dice">
     </div>
-    </div>
+    <!-- BEGIN boom -->
+        <div id="boom_{N}" class="boom"></div>
+    <!-- END boom -->
 </div>
 
 <script type="text/javascript">

@@ -35,7 +35,7 @@ define([
                 };
                 this.setAsideDiceCounters = {};
                 this.mapping = {};
-                this.isStupidToEndTurn = true;
+                this.isStupidToEndTurn = false;
             },
 
             setup: function (gamedatas) {
@@ -129,7 +129,7 @@ define([
                 dojo.stopEvent(evt);
                 if (this.checkAction('endTurn')) {
                     if (this.isStupidToEndTurn) {
-                        this.confirmationDialog(_('Hey, you won\'t get any points if you end this turn now but you still can win! ' +
+                        this.confirmationDialog(_('Hey, you won\'t get any points if you end this turn now but you still can defeat those tanks! ' +
                             'Are you sure you want to end this turn?'),
                             dojo.hitch(this, () => this.callEndTurnAjax())
                         );
@@ -178,7 +178,7 @@ define([
                 dice.filter((die) => die.choosable === '1').forEach((die) => {
                     const jsclass = '.dietype_' + die.jsclass;
                     dojo.query(`${jsclass}.play_area`).removeClass('impossibleMove');
-                    this.addTooltipToClass(`${jsclass}:not(.impossibleMove)`, '', _(`${die.tooltip} ${die.name_plural}`));
+                    this.addTooltipToClass(`${jsclass}:not(.impossibleMove)`, '', `${die.tooltip} ${die.name_plural}`);
                 });
             },
 
@@ -243,7 +243,7 @@ define([
             },
 
             getAreaNameByClass: function(jsclass) {
-                if (['tank', 'deathray'].includes(jsclass)) {
+                if (this.isMilitary(jsclass)) {
                     return jsclass;
                 }
                 if (this.mapping[jsclass] === undefined) {
@@ -255,6 +255,10 @@ define([
                     }
                 }
                 return this.mapping[jsclass];
+            },
+
+            isMilitary: function(jsclass) {
+                return ['tank', 'deathray'].includes(jsclass);
             },
 
             findDieTypeClass: function(node) {
@@ -307,7 +311,7 @@ define([
                 dojo.subscribe('newScoresTie', this, "notif_scoring");
                 this.notifqueue.setSynchronous('newScoresTie', 2000);
                 dojo.subscribe('runWinLoseAnimation', this, "notif_winLoseAnimation");
-                this.notifqueue.setSynchronous('runWinLoseAnimation', 800);
+                this.notifqueue.setSynchronous('runWinLoseAnimation', 1200);
             },
 
             notif_diceSetAside: function (notif) {
@@ -366,14 +370,45 @@ define([
                 const winning_type = notif.args.winning_dice_type;
                 const losing_type = notif.args.losing_dice_type;
                 var counter = 1;
-                dojo.forEach(dojo.query('.set_aside.dietype_' + winning_type), function (die) {
-                    const idToSlide = losing_type + '_square_' + counter;
-                    this.slideToObject(die.id, idToSlide, 1500).play();
+                dojo.forEach(dojo.query('.set_aside.dietype_' + losing_type), function (die) {
+                    const boomNode = $('boom_' + counter);
+                    // ... + random delta - random delta/2 - 20 to make it approx in the middle of a die
+                    const boom_x = dojo.style(die, 'left') + this.randInt(30) - 15 - 20;
+                    const boom_y = dojo.style(die, 'top') + this.randInt(30) - 15 - 20;
+                    if(boomNode === null || boomNode === undefined) {
+                        debugger;
+                    }
+                    dojo.style(boomNode, 'left', boom_x + 'px');
+                    dojo.style(boomNode, 'top', boom_y + 'px');
+                    dojo.fx.chain([
+                        // I use those useless animations here to delay the BOOM appearance/disappearance
+                        dojo.fx.slideTo({node: 'boom_' + counter, left: boom_x, top: boom_y, onEnd: () => {
+                                dojo.style(boomNode, 'visibility', 'visible');
+                            },
+                            duration: this.randInt(600) + 100}),
+                        dojo.fx.slideTo({node: 'boom_' + counter, left: boom_x, top: boom_y, onEnd: () => {
+                                dojo.style(boomNode, 'visibility', 'hidden');
+                                dojo.destroy(die);
+                            },
+                            duration: this.randInt(250) + 150}),
+                    ]).play();
                     counter++;
                 }.bind(this));
-                dojo.forEach(dojo.query('.set_aside.dietype_' + losing_type), function (die) {
-                    this.fadeOutAndDestroy(die, 800);
+
+                counter = 1;
+                dojo.forEach(dojo.query('.set_aside.dietype_' + winning_type), function (die) {
+                    const idToSlide = losing_type + '_square_' + counter;
+                    var deltaX = 55;
+                    if (dojo.position(die).x < dojo.position(idToSlide).x) {
+                        deltaX = -deltaX;
+                    }
+                    this.slideToObjectPos(die.id, idToSlide, deltaX, 0, 1200).play();
+                    counter++;
                 }.bind(this));
             },
+
+            randInt: function (max) {
+                return Math.floor(Math.random() * Math.floor(max));
+            }
         });
     });

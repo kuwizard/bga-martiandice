@@ -39,16 +39,23 @@
         $this->page->begin_block( "martiandice_martiandice", "e1_square" );
         $this->page->begin_block( "martiandice_martiandice", "e2_square" );
         $this->page->begin_block( "martiandice_martiandice", "e3_square" );
+        $this->page->begin_block( "martiandice_martiandice", "boom" );
 
         for( $x=1; $x<=13; $x++ )
         {
-            $this->page->insert_block( "pa_square", array(
+            $this->page->insert_block("pa_square", array(
                 'N' => $x,
             ));
-            $this->page->insert_block( "tank_square", array(
+            $this->page->insert_block("tank_square", array(
                 'N' => $x,
             ));
-            $this->page->insert_block( "deathray_square", array(
+            $this->page->insert_block("deathray_square", array(
+                'N' => $x,
+            ));
+        }
+        for( $x=1; $x<=6; $x++ )
+        {
+            $this->page->insert_block("boom", array(
                 'N' => $x,
             ));
         }

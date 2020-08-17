@@ -37,6 +37,10 @@
     height: fit-content;
 }
 
+#deathray_area {
+    margin-left: 50px;
+}
+
 #earthlings {
     position: absolute;
     margin-left: 10px;
@@ -55,11 +59,22 @@
     margin: 0 5px 5px 0;
 }
 
+.boom {
+    background-image: url('img/sprites.png');
+    width: 100px;
+    height: 77px;
+    position: absolute;
+    -webkit-filter: drop-shadow(1px 1px 1px #943);
+    filter: drop-shadow(1px 1px 1px #943);
+    visibility: hidden;
+    background-position: 0 77px;
+}
+
 .die {
     width: 55px;
     height: 55px;
     position: absolute;
-    background-image: url('img/martiandice55.png');
+    background-image: url('img/sprites.png');
     cursor: pointer;
     -webkit-filter: drop-shadow(2px 2px 2px #222);
     filter: drop-shadow(2px 2px 2px #222)
