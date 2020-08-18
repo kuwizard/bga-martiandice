@@ -160,11 +160,15 @@ define([
                         n: this.playAreaDiceCounter,
                         type: type
                     }), 'dice');
+                    const dieId = 'die_' + this.playAreaDiceCounter;
 
-                    this.placeOnObject('die_' + this.playAreaDiceCounter, dojo.query('#player_boards .player-board')[0]);
-                    this.slideToObject('die_' + this.playAreaDiceCounter, 'pa_square_' + this.playAreaDiceCounter).play();
-                    dojo.addClass('die_' + this.playAreaDiceCounter, 'play_area');
+                    this.placeOnObject(dieId, dojo.query('#player_boards .player-board')[0]);
+                    this.slideToObject(dieId, 'pa_square_' + this.playAreaDiceCounter).play();
+                    dojo.addClass(dieId, 'play_area');
                     this.playAreaDiceCounter += 1;
+
+                    this.prepareDice($(dieId));
+                    $(dieId).classList.add("roll");
                 }
             },
 
@@ -219,6 +223,13 @@ define([
                 this.refreshDiceIdsInPlayArea();
                 this.refreshDiceIdsInAside();
                 dojo.query('.set_aside').addClass('impossibleMove');
+            },
+
+            prepareDice: function(die)
+            {
+                die.classList.remove("roll");
+                // https://css-tricks.com/restart-css-animation/
+                void die.offsetWidth;
             },
 
             refreshDiceIdsInPlayArea: function() {
