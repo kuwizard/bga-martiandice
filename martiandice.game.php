@@ -204,9 +204,24 @@ class MartianDice extends Table
 
     function addScoreToPlayer($player_id, $delta)
     {
+        return self::addScore($player_id, $delta, false);
+    }
+
+    function addTieBreakerScoreToPlayer($player_id, $delta)
+    {
+        return self::addScore($player_id, $delta, true);
+    }
+
+    function addScore($player_id, $delta, $tie_breaker)
+    {
         $old_score = (int)self::getUniqueValueFromDB("SELECT player_score FROM player WHERE player_id = " . $player_id, true);
         $new_score = $old_score + $delta;
-        self::DbQuery("UPDATE player SET player_score = $new_score WHERE player_id = $player_id");
+        $player_table = 'player_score';
+        if ($tie_breaker)
+        {
+            $player_table = 'player_score_aux';
+        }
+        self::DbQuery("UPDATE player SET ". $player_table ." = $new_score WHERE player_id = $player_id");
         return $new_score;
     }
 
@@ -220,9 +235,15 @@ class MartianDice extends Table
         self::DbQuery("UPDATE player SET player_played_this_round = true WHERE player_id = " . $player_id);
     }
 
-    function resetRound()
+    function resetRound($except_non_winning = false)
     {
-        self::DbQuery("UPDATE player SET player_played_this_round = false");
+        $sql = "UPDATE player SET player_played_this_round = false";
+        if ($except_non_winning)
+        {
+            $max_score = max(self::getScores());
+            $sql .= " WHERE player_score = " . $max_score;
+        }
+        self::DbQuery($sql);
     }
 
     function getWinningPlayerCount()
@@ -533,7 +554,7 @@ class MartianDice extends Table
     function stThrowTieBreaker()
     {
         $tie_break_dice_amount = 6;
-        self::resetRound();
+        self::resetRound(true);
         if (self::getWinningPlayerCount() > 1) {
             while (!self::allPlayersPlayedThisRound()) {
                 self::activeNextPlayer();
@@ -548,7 +569,7 @@ class MartianDice extends Table
                     ));
 
                     $death_rays_amount = self::getCurrentRoundDice()[DEATH_RAY]['amount'];
-                    $new_score = self::addScoreToPlayer($active_player, $death_rays_amount);
+                    $new_score = self::addTieBreakerScoreToPlayer($active_player, $death_rays_amount);
                     if ($death_rays_amount == 1)
                     {
                         $ending = clienttranslate('Death Ray');
