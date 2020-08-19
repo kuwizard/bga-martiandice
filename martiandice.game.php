@@ -410,6 +410,8 @@ class MartianDice extends Table
             {
                 self::markAsSetAside(TANK);
             }
+            // There might be some tanks just set aside therefore $current_round_dice should be recalculated
+            $current_round_dice = self::getCurrentRoundDice();
 
             $available_dice = array_filter($current_round_dice, function ($i) {
                 return $i['amount'] > 0 && $i['choosable'] == '1';
