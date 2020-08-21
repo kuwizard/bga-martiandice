@@ -235,29 +235,17 @@ class MartianDice extends Table
         self::DbQuery("UPDATE player SET player_played_this_round = true WHERE player_id = " . $player_id);
     }
 
-    function resetRound($except_non_winning = false)
+    function resetRound()
     {
         $sql = "UPDATE player SET player_played_this_round = false";
-        if ($except_non_winning)
-        {
-            $max_score = max(self::getScores());
-            $sql .= " WHERE player_score = " . $max_score;
-        }
         self::DbQuery($sql);
     }
 
-    function getWinningPlayerCount()
+    function hasPlayerTie($player_id)
     {
-        $max_score = max(self::getScores());
-        $winning_players = self::getObjectListFromDB("SELECT player_id FROM player WHERE player_score = " . $max_score, true);
-        return count($winning_players);
-    }
-
-    function isPlayerWinning($player_id)
-    {
-        $max_score = max(self::getScores());
         $current_user_score = (int)self::getUniqueValueFromDB("SELECT player_score FROM player WHERE player_id = " . $player_id, true);
-        return $max_score == $current_user_score;
+        $players_with_this_score = (int)self::getUniqueValueFromDB("SELECT COUNT(*) FROM player WHERE player_score = " . $current_user_score, true);
+        return $players_with_this_score > 1;
     }
 
     function isPlayerZombie($player_id)
@@ -556,39 +544,37 @@ class MartianDice extends Table
     function stThrowTieBreaker()
     {
         $tie_break_dice_amount = 6;
-        self::resetRound(true);
-        if (self::getWinningPlayerCount() > 1) {
-            while (!self::allPlayersPlayedThisRound()) {
-                self::activeNextPlayer();
-                $active_player = self::getActivePlayerId();
-                if (self::isPlayerWinning($active_player)) {
-                    self::throwDice($tie_break_dice_amount);
-                    $dice_thrown = self::getCurrentRoundDice();
+        self::resetRound();
+        while (!self::allPlayersPlayedThisRound()) {
+            self::activeNextPlayer();
+            $active_player = self::getActivePlayerId();
+            if (self::hasPlayerTie($active_player)) {
+                self::throwDice($tie_break_dice_amount);
+                $dice_thrown = self::getCurrentRoundDice();
 
-                    self::notifyAllPlayers("diceThrown", '', array(
-                        'dice' => $dice_thrown,
-                        'is_reroll' => false,
-                    ));
+                self::notifyAllPlayers("diceThrown", '', array(
+                    'dice' => $dice_thrown,
+                    'is_reroll' => false,
+                ));
 
-                    $death_rays_amount = self::getCurrentRoundDice()[DEATH_RAY]['amount'];
-                    $new_score = self::addTieBreakerScoreToPlayer($active_player, $death_rays_amount);
-                    if ($death_rays_amount == 1)
-                    {
-                        $ending = clienttranslate('Death Ray');
-                    } else {
-                        $ending = clienttranslate('Death Rays');
-                    }
-
-                    self::notifyAllPlayers("newScoresTie", clienttranslate('${player_name} threw ' . $tie_break_dice_amount . ' dice to break a tie and got ' . $death_rays_amount . ' ' . $ending), array(
-                        'player_name' => self::getActivePlayerName(),
-                        'player_id' => $active_player,
-                        'dice_types_scored' => [self::jsclass(DEATH_RAY)],
-                        'new_score' => $new_score,
-                        'score_from_play_area' => true,
-                    ));
+                $death_rays_amount = self::getCurrentRoundDice()[DEATH_RAY]['amount'];
+                $new_score = self::addTieBreakerScoreToPlayer($active_player, $death_rays_amount);
+                if ($death_rays_amount == 1)
+                {
+                    $ending = clienttranslate('Death Ray');
+                } else {
+                    $ending = clienttranslate('Death Rays');
                 }
-                self::markPlayerAsPlayedThisRound($active_player);
+
+                self::notifyAllPlayers("newScoresTie", clienttranslate('${player_name} threw ' . $tie_break_dice_amount . ' dice to break a tie and got ' . $death_rays_amount . ' ' . $ending), array(
+                    'player_name' => self::getActivePlayerName(),
+                    'player_id' => $active_player,
+                    'dice_types_scored' => [self::jsclass(DEATH_RAY)],
+                    'new_score' => $new_score,
+                    'score_from_play_area' => true,
+                ));
             }
+            self::markPlayerAsPlayedThisRound($active_player);
         }
         $this->gamestate->nextState('gameEnd');
     }

@@ -94,7 +94,7 @@ $machinestates = array(
 
     5 => array(
         "name" => "tieBreakingOrEnd",
-        "description" => clienttranslate('${actplayer} throws 6 dice to break a tie'),
+        "description" => clienttranslate('Tie breaker round!'),
         "type" => "game",
         "action" => "stThrowTieBreaker",
         "transitions" => array("gameEnd" => 99)
