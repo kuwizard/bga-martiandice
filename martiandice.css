@@ -14,7 +14,6 @@
  */
 
 #board {
-    width: 780px;
     height: 900px;
     display: grid;
     grid-auto-rows: 56px;
@@ -22,7 +21,6 @@
 }
 
 #play_area, #military_area {
-    width: 780px;
     display: flex;
     justify-content: center;
     position: relative;
