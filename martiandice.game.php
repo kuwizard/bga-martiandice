@@ -604,6 +604,7 @@ class MartianDice extends Table
                     $this->gamestate->nextState("continueOrEnd");
                     break;
                 case 'continueOrEnd':
+                    self::renewTable('set_aside');
                     self::endGameIfNeeded();
                     break;
                 default:
