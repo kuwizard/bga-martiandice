@@ -41,15 +41,11 @@ define([
             setup: function (gamedatas) {
                 console.log("Starting game setup");
 
-                this.setAsideDiceCounters = { ...this.setAsideDiceCountersNew };
+                this.setAsideDiceCounters = Object.assign({}, this.setAsideDiceCountersNew);
                 const allDice = gamedatas.current_round_dice.map((e) => {
-                    const setAsideAmount = gamedatas.set_aside_dice.find((die) => die.type === e.type).amount
-                    return {
-                        ...e,
-                        amount: e.amount + setAsideAmount
-                    }
+                    const setAsideAmount = gamedatas.set_aside_dice.find((die) => die.type === e.type).amount;
+                    return Object.assign({}, e, {amount: e.amount + setAsideAmount});
                 });
-
                 this.placeNewDice(allDice);
 
                 this.doSetAsideAnimations(gamedatas.set_aside_dice);
@@ -292,7 +288,7 @@ define([
 
             cleanupDiceAndPA: function() {
                 this.playAreaDiceCounter = 1;
-                this.setAsideDiceCounters = { ...this.setAsideDiceCountersNew };
+                this.setAsideDiceCounters = Object.assign({}, this.setAsideDiceCountersNew);
                 this.mapping = {};
                 for (let i = 1; i <= this.maxDiceInAnyArea; i++) {
                     dojo.destroy('pa_square_' + i);
