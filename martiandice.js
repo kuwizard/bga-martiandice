@@ -91,6 +91,9 @@ define([
                             this.addActionButton('reroll', _('roll all available dice'), 'onRerollDice');
                             this.addActionButton('end_turn', _('end your turn'), 'onEndTurn', null, null, 'red');
                             break;
+                        case 'endOrEnd':
+                            this.addActionButton('end_turn', _('end your turn'), 'onEndTurn', null, null, 'red');
+                            break;
                     }
                 }
             },

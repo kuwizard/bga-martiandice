@@ -68,8 +68,8 @@ $machinestates = array(
         "description" => '',
         "type" => "game",
         "action" => "stThrowAllDice",
-        "updateGameProgression" => true,   
-        "transitions" => array("diceChoosing" => 3 )
+        "updateGameProgression" => true,
+        "transitions" => array("diceChoosing" => 3, "endOrEnd" => 5)
      ),
 
     3 => array(
@@ -79,7 +79,7 @@ $machinestates = array(
         "type" => "activeplayer",
         "args" => "argPlayerTurn",
         "possibleactions" => array("diceSetAside", "endTurn"),
-        "transitions" => array("continueOrEnd" => 4, "nextPlayer" => 2, "tieBreakingOrEnd" => 5)
+        "transitions" => array("continueOrEnd" => 4, "nextPlayer" => 2, "tieBreakingOrEnd" => 6)
     ),
 
     4 => array(
@@ -89,10 +89,20 @@ $machinestates = array(
         "type" => "activeplayer",
         "args" => "argPlayerTurn",
         "possibleactions" => array("rerollDice", "endTurn"),
-        "transitions" => array("diceChoosing" => 3, "nextPlayer" => 2, "tieBreakingOrEnd" => 5)
+        "transitions" => array("diceChoosing" => 3, "nextPlayer" => 2, "tieBreakingOrEnd" => 6, "endOrEnd" => 5)
     ),
 
     5 => array(
+        "name" => "endOrEnd",
+        "description" => clienttranslate('${actplayer} rolled too many tanks and should end the turn'),
+        "descriptionmyturn" => clienttranslate('${you} rolled too many tanks and the only option is to '),
+        "type" => "activeplayer",
+        "args" => "argPlayerTurn",
+        "possibleactions" => array("endTurn"),
+        "transitions" => array("nextPlayer" => 2, "tieBreakingOrEnd" => 6)
+    ),
+
+    6 => array(
         "name" => "tieBreakingOrEnd",
         "description" => clienttranslate('Tie breaker round!'),
         "type" => "game",

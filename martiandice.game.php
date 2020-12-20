@@ -181,13 +181,17 @@ class MartianDice extends Table
         return (int)self::getUniqueValueFromDB("SELECT SUM(amount) FROM set_aside", true);
     }
 
-    function isStupidToEndTurnNow()
+    function userCanWinThisTurn()
     {
         $available_dice = (int)self::getUniqueValueFromDB("SELECT SUM(amount) FROM current_round", true);
         $tanks_set_aside = (int)self::getUniqueValueFromDB("SELECT amount FROM set_aside WHERE dice_type = ".TANK, true);
         $death_rays_set_aside = (int)self::getUniqueValueFromDB("SELECT amount FROM set_aside WHERE dice_type = ".DEATH_RAY, true);
-        $user_can_win_this_turn = $available_dice + $death_rays_set_aside >= $tanks_set_aside;
-        return $user_can_win_this_turn && self::isMoreTanksThanDeathRays();
+        return $available_dice + $death_rays_set_aside >= $tanks_set_aside;
+    }
+
+    function isStupidToEndTurnNow()
+    {
+        return self::userCanWinThisTurn() && self::isMoreTanksThanDeathRays();
     }
 
     function isMoreTanksThanDeathRays()
@@ -385,8 +389,6 @@ class MartianDice extends Table
         if (count($available_types) > 0) {
             $set_aside_count = self::getSetAsideSum();
             self::throwDice(self::TURN_START_DICE_AMOUNT - $set_aside_count);
-
-            // If there's nothing to set aside - end turn
             $current_round_dice = self::getCurrentRoundDice();
 
             self::notifyAllPlayers("diceThrown", '', array(
@@ -404,11 +406,15 @@ class MartianDice extends Table
             $available_dice = array_filter($current_round_dice, function ($i) {
                 return $i['amount'] > 0 && $i['choosable'] == '1';
             });
+            // If there's nothing to set aside - end turn
             if (empty($available_dice)) {
                 self::notifyAllPlayers("newScores", clienttranslate('${player_name} cannot set aside any dice after reroll, their turn is over'), array(
                     'player_name' => self::getActivePlayerName(),
                 ));
                 self::endTurn();
+            } elseif (!self::userCanWinThisTurn()) {
+                self::giveExtraTime(self::getActivePlayerId());
+                $this->gamestate->nextState('endOrEnd');
             } else {
                 self::giveExtraTime(self::getActivePlayerId());
                 $this->gamestate->nextState('diceChoosing');
@@ -416,7 +422,6 @@ class MartianDice extends Table
         } else
             throw new feException("Impossible move");
     }
-
 
     function endTurn()
     {
@@ -538,7 +543,11 @@ class MartianDice extends Table
                 self::markAsSetAside(TANK);
             }
         }
-        $this->gamestate->nextState('diceChoosing');
+        if (self::userCanWinThisTurn()) {
+            $this->gamestate->nextState('diceChoosing');
+        } else {
+            $this->gamestate->nextState('endOrEnd');
+        }
     }
 
     function stThrowTieBreaker()
