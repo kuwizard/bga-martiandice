@@ -89,6 +89,9 @@ class MartianDice extends Table
         self::initStat('player', 'timesTanksSucceeded', 0);
         self::initStat('player', 'amountOfBonusReceived', 0);
         self::initStat('player', 'timesScoredZeroPoints', 0);
+        self::initStat('player', 'amountOfTanksRolled', 0);
+        self::initStat('player', 'amountOfDeathRaysRolled', 0);
+        self::initStat('player', 'amountOfEarthlingsRolled', 0);
         /************ End of the game initialization *****/
     }
 
@@ -106,6 +109,21 @@ class MartianDice extends Table
             self::incStat(1, 'turns_number');
         }
         self::fillTable('current_round', $count);
+
+        $dice_thrown = self::getCurrentRoundDice();
+        // Adding to rolled stats
+        foreach ($dice_thrown as $dice_type => $dice_info) {
+            $amount = $dice_info['amount'];
+            if ($amount > 0) {
+                if ($dice_type == DEATH_RAY) {
+                    self::incStat($amount, 'amountOfDeathRaysRolled', self::getActivePlayerId());
+                } elseif ($dice_type == TANK) {
+                    self::incStat($amount, 'amountOfTanksRolled', self::getActivePlayerId());
+                } else {
+                    self::incStat($amount, 'amountOfEarthlingsRolled', self::getActivePlayerId());
+                }
+            }
+        }
     }
 
     function fillTable($tableName, $count = null)
@@ -318,7 +336,7 @@ class MartianDice extends Table
 
 //////////////////////////////////////////////////////////////////////////////
 //////////// Utility functions
-////////////    
+////////////
 
     function integerize($object, $fields = null)
     {
@@ -356,7 +374,7 @@ class MartianDice extends Table
 
 //////////////////////////////////////////////////////////////////////////////
 //////////// Player actions
-//////////// 
+////////////
     function diceSetAside($dice_type)
     {
         self::checkAction('diceSetAside');
@@ -593,15 +611,15 @@ class MartianDice extends Table
 
     /*
         zombieTurn:
-        
+
         This method is called each time it is the turn of a player who has quit the game (= "zombie" player).
         You can do whatever you want in order to make sure the turn of this player ends appropriately
         (ex: pass).
-        
+
         Important: your zombie code will be called when the player leaves the game. This action is triggered
         from the main site and propagated to the gameserver from a server, not from a browser.
         As a consequence, there is no current player associated to this action. In your zombieTurn function,
-        you must _never_ use getCurrentPlayerId() or getCurrentPlayerName(), otherwise it will fail with a "Not logged" error message. 
+        you must _never_ use getCurrentPlayerId() or getCurrentPlayerName(), otherwise it will fail with a "Not logged" error message.
     */
 
     function zombieTurn($state, $active_player)
@@ -632,13 +650,13 @@ class MartianDice extends Table
 
     /*
         upgradeTableDb:
-        
+
         You don't have to care about this until your game has been published on BGA.
         Once your game is on BGA, this method is called everytime the system detects a game running with your old
         Database scheme.
         In this case, if you change your Database scheme, you just have to apply the needed changes in order to
         update the game database and allow the game to continue to run with your new version.
-    
+
     */
 
     function upgradeTableDb($from_version)

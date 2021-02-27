@@ -81,5 +81,17 @@ $stats_type = array(
         "timesScoredZeroPoints" => array("id"=> 15,
             "name" => totranslate("Number of times player defeated tanks without abducting anyone"),
             "type" => "int" ),
+
+        "amountOfDeathRaysRolled" => array("id"=> 16,
+            "name" => totranslate("Number of Death Rays rolled throughout the game"),
+            "type" => "int" ),
+
+        "amountOfTanksRolled" => array("id"=> 17,
+            "name" => totranslate("Number of tanks rolled throughout the game"),
+            "type" => "int" ),
+
+        "amountOfEarthlingsRolled" => array("id"=> 18,
+            "name" => totranslate("Number of Earthlings rolled throughout the game"),
+            "type" => "int" ),
     )
 );
