@@ -63,7 +63,7 @@ $stats_type = array(
             "type" => "int" ),
 
         "timesEarthlingsChosen" => array("id"=> 11,
-            "name" => totranslate("Number of times Earthlings (Humans, Cows and Chickens) were chosen"),
+            "name" => totranslate("Number of times Earthlings (Humans, Cows and/or Chickens) were chosen"),
             "type" => "int" ),
 
         "timesEarthlingsAbducted" => array("id"=> 12,

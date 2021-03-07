@@ -301,7 +301,7 @@ class MartianDice extends Table
             $dice_type_name = $this->dicetypes[$dice_type]['name_plural'];
         }
         $is_stupid_to_end_turn = self::isStupidToEndTurnNow();
-        self::notifyAllPlayers("diceSetAside", clienttranslate('${player_name} sets aside '.$amount.' ${dice_type_name}'), array(
+        self::notifyAllPlayers("diceSetAside", clienttranslate('${player_name} sets aside ${dice_amount} ${dice_type_name}'), array(
             'player_name' => self::getActivePlayerName(),
             'dice_type_name' => $dice_type_name,
             'dice_type_jsclass' => self::jsclass($dice_type),
@@ -387,8 +387,9 @@ class MartianDice extends Table
             self::markAsSetAside($dice_type);
 
             if (self::getSetAsideSum() == self::TURN_START_DICE_AMOUNT) {
-                self::notifyAllPlayers("newScores", clienttranslate('${player_name} sets aside all ' . self::TURN_START_DICE_AMOUNT . ' dice, their turn is over'), array(
+                self::notifyAllPlayers("newScores", clienttranslate('${player_name} sets aside all ${dice_amount} dice, their turn is over'), array(
                     'player_name' => self::getActivePlayerName(),
+                    'dice_amount' => self::TURN_START_DICE_AMOUNT,
                 ));
                 self::endTurn();
             } else {
@@ -449,24 +450,19 @@ class MartianDice extends Table
             self::incStat(1, 'timesTanksSucceeded', self::getCurrentPlayerId());
 
             $notif_message = clienttranslate('${player_name} fails to deal with the Earthling military and comes home empty-tentacled');
-            self::runWinLoseAnimation($notif_message, TANK, DEATH_RAY);
+            self::runWinLoseAnimation($notif_message, TANK, DEATH_RAY, null);
         } else {
             $player_id = self::getCurrentPlayerId();
             $set_aside_dice = self::getSetAsideDiceAmounts();
             $delta = $set_aside_dice[COW] + $set_aside_dice[CHICKEN] + $set_aside_dice[HUMAN];
             $all_three_types = $set_aside_dice[COW] > 0 && $set_aside_dice[CHICKEN] > 0 && $set_aside_dice[HUMAN] > 0;
-            if ($delta == 1)
-            {
-                $ending = clienttranslate('Earthling');
-            } else {
-                $ending = clienttranslate('Earthlings');
-            }
+
             if ($delta == 0)
             {
                 $notif_message = clienttranslate('${player_name} successfully fended off Earthling military but failed to capture a single Earthling. C\'mon, Commander, we need some samples!');
                 self::incStat(1, 'timesScoredZeroPoints', self::getActivePlayerId());
             } else {
-                $notif_message = clienttranslate('${player_name} successfully abducts ' . $delta . ' ' . $ending);
+                $notif_message = clienttranslate('${player_name} successfully abducts ${delta} Earthling(s)');
             }
 
             if ($all_three_types) {
@@ -479,7 +475,7 @@ class MartianDice extends Table
 
             self::incStat(1, 'timesEarthlingsAbducted', self::getActivePlayerId());
 
-            self::runWinLoseAnimation($notif_message, DEATH_RAY, TANK);
+            self::runWinLoseAnimation($notif_message, DEATH_RAY, TANK, $delta);
             self::notifyAllPlayers("newScores", '', array(
                 'player_name' => self::getActivePlayerName(),
                 'player_id' => self::getActivePlayerId(),
@@ -493,13 +489,14 @@ class MartianDice extends Table
         self::endGameIfNeeded();
     }
 
-    function runWinLoseAnimation($message, $winning_type, $losing_type)
+    function runWinLoseAnimation($message, $winning_type, $losing_type, $delta)
     {
         self::notifyAllPlayers("runWinLoseAnimation", $message, array(
             'player_name' => self::getActivePlayerName(),
             'player_id' => self::getActivePlayerId(),
             'winning_dice_type' => self::jsclass($winning_type),
             'losing_dice_type' => self::jsclass($losing_type),
+            'delta' => $delta,
         ));
     }
 
@@ -513,7 +510,7 @@ class MartianDice extends Table
                 $this->gamestate->nextState('tieBreakingOrEnd');
             } else {
                 if (!self::getGameStateValue('end_turn_notification_sent')) {
-                    self::notifyAllPlayers("newScores", clienttranslate('${player_name} got more than 25 points, this is the last turn!'), array(
+                    self::notifyAllPlayers("newScores", clienttranslate('${player_name} reached 25 points, this turn is the last one!'), array(
                         'player_name' => self::getActivePlayerName(),
                     ));
                     self::setGameStateValue('end_turn_notification_sent', true);
@@ -586,19 +583,15 @@ class MartianDice extends Table
 
                 $death_rays_amount = self::getCurrentRoundDice()[DEATH_RAY]['amount'];
                 $new_score = self::addTieBreakerScoreToPlayer($active_player, $death_rays_amount);
-                if ($death_rays_amount == 1)
-                {
-                    $ending = clienttranslate('Death Ray');
-                } else {
-                    $ending = clienttranslate('Death Rays');
-                }
 
-                self::notifyAllPlayers("newScoresTie", clienttranslate('${player_name} threw ' . $tie_break_dice_amount . ' dice to break a tie and got ' . $death_rays_amount . ' ' . $ending), array(
+                self::notifyAllPlayers("newScoresTie", clienttranslate('${player_name} threw ${tie_break_dice_amount} dice to break a tie and got ${death_rays_amount} Death Ray(s)'), array(
                     'player_name' => self::getActivePlayerName(),
                     'player_id' => $active_player,
                     'dice_types_scored' => [self::jsclass(DEATH_RAY)],
                     'new_score' => $new_score,
                     'score_from_play_area' => true,
+                    'tie_break_dice_amount' => $tie_break_dice_amount,
+                    'death_rays_amount' => $death_rays_amount,
                 ));
             }
             self::markPlayerAsPlayedThisRound($active_player);
