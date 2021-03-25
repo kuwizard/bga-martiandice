@@ -467,7 +467,7 @@ class MartianDice extends Table
 
             if ($all_three_types) {
                 $delta += 3;
-                $notif_message .= clienttranslate(" and receives 3 bonus points for having all three Earthling types");
+                $notif_message = clienttranslate('${player_name} successfully abducts ${delta} Earthlings and receives 3 bonus points for having all three Earthling types');
                 self::incStat(3, 'amountOfBonusReceived', self::getActivePlayerId());
             }
 
