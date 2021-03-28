@@ -454,10 +454,10 @@ class MartianDice extends Table
         } else {
             $player_id = self::getCurrentPlayerId();
             $set_aside_dice = self::getSetAsideDiceAmounts();
-            $delta = $set_aside_dice[COW] + $set_aside_dice[CHICKEN] + $set_aside_dice[HUMAN];
+            $captured_amount = $set_aside_dice[COW] + $set_aside_dice[CHICKEN] + $set_aside_dice[HUMAN];
             $all_three_types = $set_aside_dice[COW] > 0 && $set_aside_dice[CHICKEN] > 0 && $set_aside_dice[HUMAN] > 0;
 
-            if ($delta == 0)
+            if ($captured_amount == 0)
             {
                 $notif_message = clienttranslate('${player_name} successfully fended off Earthling military but failed to capture a single Earthling. C\'mon, Commander, we need some samples!');
                 self::incStat(1, 'timesScoredZeroPoints', self::getActivePlayerId());
@@ -465,17 +465,18 @@ class MartianDice extends Table
                 $notif_message = clienttranslate('${player_name} successfully abducts ${delta} Earthling(s)');
             }
 
+            $points_scored = $captured_amount;
             if ($all_three_types) {
-                $delta += 3;
+                $points_scored += 3;
                 $notif_message = clienttranslate('${player_name} successfully abducts ${delta} Earthlings and receives 3 bonus points for having all three Earthling types');
                 self::incStat(3, 'amountOfBonusReceived', self::getActivePlayerId());
             }
 
-            $new_score = self::addScoreToPlayer($player_id, $delta);
+            $new_score = self::addScoreToPlayer($player_id, $points_scored);
 
             self::incStat(1, 'timesEarthlingsAbducted', self::getActivePlayerId());
 
-            self::runWinLoseAnimation($notif_message, DEATH_RAY, TANK, $delta);
+            self::runWinLoseAnimation($notif_message, DEATH_RAY, TANK, $captured_amount);
             self::notifyAllPlayers("newScores", '', array(
                 'player_name' => self::getActivePlayerName(),
                 'player_id' => self::getActivePlayerId(),
@@ -489,14 +490,14 @@ class MartianDice extends Table
         self::endGameIfNeeded();
     }
 
-    function runWinLoseAnimation($message, $winning_type, $losing_type, $delta)
+    function runWinLoseAnimation($message, $winning_type, $losing_type, $points_scored)
     {
         self::notifyAllPlayers("runWinLoseAnimation", $message, array(
             'player_name' => self::getActivePlayerName(),
             'player_id' => self::getActivePlayerId(),
             'winning_dice_type' => self::jsclass($winning_type),
             'losing_dice_type' => self::jsclass($losing_type),
-            'delta' => $delta,
+            'delta' => $points_scored,
         ));
     }
 
