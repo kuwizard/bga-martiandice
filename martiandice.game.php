@@ -294,15 +294,9 @@ class MartianDice extends Table
             self::incStat(1, 'timesDeathRayChosen', self::getCurrentPlayerId());
         }
 
-        if ($amount == 1) {
-            $dice_type_name = $this->dicetypes[$dice_type]['name'];
-        } else {
-            $dice_type_name = $this->dicetypes[$dice_type]['name_plural'];
-        }
         $is_stupid_to_end_turn = self::isStupidToEndTurnNow();
-        self::notifyAllPlayers("diceSetAside", clienttranslate('${player_name} sets aside ${dice_amount} ${dice_type_name}'), array(
+        self::notifyAllPlayers("diceSetAside", $this->dicetypes[$dice_type]['set_aside_lexeme'], array(
             'player_name' => self::getActivePlayerName(),
-            'dice_type_name' => $dice_type_name,
             'dice_type_jsclass' => self::jsclass($dice_type),
             'dice_amount' => $amount,
             'is_stupid_to_end_turn' => $is_stupid_to_end_turn,
