@@ -418,6 +418,8 @@ class MartianDice extends Table
             $available_dice = array_filter($current_round_dice, function ($i) {
                 return $i['amount'] > 0 && $i['choosable'] == '1';
             });
+            self::giveExtraTime(self::getActivePlayerId());
+
             // If there's nothing to set aside - end turn
             if (empty($available_dice)) {
                 self::notifyAllPlayers("newScores", clienttranslate('${player_name} cannot set aside any dice after reroll, their turn is over'), array(
@@ -425,10 +427,8 @@ class MartianDice extends Table
                 ));
                 self::endTurn();
             } elseif (!self::userCanWinThisTurn()) {
-                self::giveExtraTime(self::getActivePlayerId());
                 $this->gamestate->nextState('endOrEnd');
             } else {
-                self::giveExtraTime(self::getActivePlayerId());
                 $this->gamestate->nextState('diceChoosing');
             }
         } else

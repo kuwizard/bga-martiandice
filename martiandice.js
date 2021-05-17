@@ -74,6 +74,7 @@ define([
                 console.log('Entering state: ' + stateName);
                 switch (stateName) {
                     case 'continueOrEnd':
+                    case 'endOrEnd':
                         this.removeAllPossibleMoves();
                         this.removeAllTooltips();
                         break;
@@ -150,7 +151,6 @@ define([
                 dice.forEach(die => {
                     this.addDieToPlayArea(die.jsclass, die.amount);
                 })
-                dojo.query('.die').connect('onclick', this, 'onDieClick');
             },
 
             addDieToPlayArea: function (type, count) {
@@ -177,11 +177,16 @@ define([
             updatePossibleMoves: function (dice) {
                 this.removeAllPossibleMoves();
                 this.removeAllTooltips();
-
                 dice.filter((die) => die.choosable === '1').forEach((die) => {
                     const jsclass = '.dietype_' + die.jsclass;
                     dojo.query(`${jsclass}.play_area`).removeClass('impossibleMove');
+                    dojo.query(`${jsclass}.play_area`).connect('onclick', this, 'onDieClick')
                     this.addTooltipToClass(`${jsclass}:not(.impossibleMove)`, '', die.tooltip_lexeme);
+                });
+                const TANK = '2';
+                dice.filter((die) => die.type === TANK).forEach((die) => {
+                    const jsclass = '.dietype_' + die.jsclass;
+                    dojo.query(`${jsclass}.play_area`).removeClass('impossibleMove');
                 });
             },
 
@@ -192,7 +197,7 @@ define([
             },
 
             removeAllPossibleMoves: function () {
-                dojo.query('.die').addClass('impossibleMove');
+                dojo.query('.die.play_area').addClass('impossibleMove');
             },
 
             doSetAsideAnimations: function (dice) {
@@ -221,7 +226,6 @@ define([
                 }
                 this.refreshDiceIdsInPlayArea();
                 this.refreshDiceIdsInAside();
-                dojo.query('.set_aside').addClass('impossibleMove');
             },
 
             prepareDice: function(die)

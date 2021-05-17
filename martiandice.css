@@ -73,9 +73,12 @@
     height: 55px;
     position: absolute;
     background-image: url('img/sprites.png');
-    cursor: pointer;
     -webkit-filter: drop-shadow(2px 2px 2px #222);
     filter: drop-shadow(2px 2px 2px #222)
+}
+
+.die.play_area {
+    cursor: pointer;
 }
 
 .dietype_ufo { background-position: 0 0; }
@@ -87,7 +90,7 @@
 .impossibleMove {
     opacity: 0.3;
     filter:alpha(opacity=30); /* For IE8 and earlier */
-    cursor: default;
+    cursor: default !important;
 }
 
 .turn-order {
