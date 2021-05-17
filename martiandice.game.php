@@ -183,7 +183,6 @@ class MartianDice extends Table
     {
         return array_map(function ($die) {
             $types_added = array_merge($die, $this->dicetypes[$die['type']]);
-            $types_added['tooltip'] = clienttranslate('Choose all');
             return $types_added;
         }, $array);
     }

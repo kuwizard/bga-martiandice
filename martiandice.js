@@ -181,7 +181,7 @@ define([
                 dice.filter((die) => die.choosable === '1').forEach((die) => {
                     const jsclass = '.dietype_' + die.jsclass;
                     dojo.query(`${jsclass}.play_area`).removeClass('impossibleMove');
-                    this.addTooltipToClass(`${jsclass}:not(.impossibleMove)`, '', `${die.tooltip} ${die.name_plural}`);
+                    this.addTooltipToClass(`${jsclass}:not(.impossibleMove)`, '', die.tooltip_lexeme);
                 });
             },
 
