@@ -181,7 +181,7 @@ define([
                     const jsclass = '.dietype_' + die.jsclass;
                     dojo.query(`${jsclass}.play_area`).removeClass('impossibleMove');
                     dojo.query(`${jsclass}.play_area`).connect('onclick', this, 'onDieClick')
-                    this.addTooltipToClass(`${jsclass}.play_area:not(.impossibleMove)`, '', die.tooltip_lexeme);
+                    this.addTooltipToClass(`${jsclass}.play_area:not(.impossibleMove)`, '', _(die.tooltip_lexeme));
                 });
                 const TANK = '2';
                 dice.filter((die) => die.type === TANK).forEach((die) => {
